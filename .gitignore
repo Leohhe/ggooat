@@ -1,0 +1,11 @@
+# 编辑器 / 工具配置
+.claude/
+.trae/
+.codebuddy/
+.vscode/
+.idea/
+
+# 系统文件
+Thumbs.db
+desktop.ini
+.DS_Store
