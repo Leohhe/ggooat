@@ -953,6 +953,10 @@ body{
   font-size:9px;color:var(--text-muted);font-weight:400;
   margin-left:5px;opacity:0.9;
 }
+.admin-code-actions{display:flex;gap:6px;align-items:center}
+.admin-icon-btn:not(.danger){
+  background:rgba(124,93,250,0.12);color:var(--divine-purple);
+}
 .select-hint{
   font-size:10px;color:var(--text-muted);
   letter-spacing:0.04em;text-align:center;
@@ -2284,6 +2288,36 @@ body{
   box-shadow:0 10px 22px rgba(124,93,250,0.38);
 }
 .redeem-btn:active{transform:scale(0.96)}
+/* ========== 账号卡片 ========== */
+.account-card{
+  width:100%;
+  background:rgba(255,255,255,0.9);
+  border:1.5px solid var(--glass-border);
+  border-radius:20px;
+  padding:16px 18px;
+  box-shadow:0 8px 24px rgba(124,93,250,0.08);
+  margin-top:14px;
+}
+.account-title{
+  font-size:13px;font-weight:700;color:var(--text-dark);
+  letter-spacing:0.05em;margin-bottom:10px;
+}
+.account-row{margin-bottom:8px}
+.account-btns{display:flex;gap:8px;margin-top:10px}
+.account-btn{
+  flex:1;height:36px;border-radius:11px;border:1.5px solid rgba(124,93,250,0.25);
+  background:rgba(255,255,255,0.85);color:var(--divine-purple);
+  font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.25s;
+}
+.account-btn.primary{
+  background:linear-gradient(135deg,#a98bff 0%,#7c5dfa 100%);
+  border:none;color:#fff;box-shadow:0 5px 14px rgba(124,93,250,0.28);
+}
+.account-btn.danger{color:#d9534f;border-color:rgba(217,83,79,0.3)}
+.account-btn:active{transform:scale(0.97)}
+.account-hint,.account-status{
+  font-size:10.5px;color:var(--text-muted);margin-top:9px;line-height:1.6;
+}
 /* ========== 兑换码管理后台 ========== */
 .admin-screen{
   position:absolute;inset:0;border-radius:48px;
@@ -3047,6 +3081,35 @@ body.night .scene-label{color:var(--text-muted)}
       </div>
     </div>
 
+    <!-- 账号（登录后次数与记录跨设备同步） -->
+    <div class="account-card">
+      <!-- 未登录 -->
+      <div id="accountLogin">
+        <div class="account-title">账号</div>
+        <div class="account-row">
+          <input type="text" id="authUser" class="redeem-input" placeholder="账号（2-16位）" maxlength="16">
+        </div>
+        <div class="account-row">
+          <input type="password" id="authPass" class="redeem-input" placeholder="密码（6-32位）" maxlength="32"
+                 onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <div class="account-btns">
+          <button class="account-btn primary" id="authSubmit" onclick="doLogin()">登录</button>
+          <button class="account-btn" onclick="doRegister()">注册并登录</button>
+        </div>
+        <div class="account-hint">登录后：剩余次数、昵称头像、占卜记录云端的同步，换手机也不丢</div>
+      </div>
+      <!-- 已登录 -->
+      <div id="accountLogged" style="display:none">
+        <div class="account-title">已登录：<span id="accountName"></span></div>
+        <div class="account-status" id="accountSync"></div>
+        <div class="account-btns">
+          <button class="account-btn" onclick="syncProfileToCloud(); showToast('已同步到云端')">立即同步</button>
+          <button class="account-btn danger" onclick="doLogout()">退出登录</button>
+        </div>
+      </div>
+    </div>
+
     <div class="profile-footer">
       <div class="profile-footer-text">GgooAt · 塔罗 v1.0</div>
     </div>
@@ -3072,10 +3135,14 @@ body.night .scene-label{color:var(--text-muted)}
           <span class="label-icon">✦</span>管理员密码
         </div>
         <div class="settings-row">
-          <input type="password" id="adminPwd" class="settings-input type-password" placeholder="请输入管理密钥" onkeydown="if(event.key==='Enter') adminLogin()">
+          <input type="text" id="adminUser" class="settings-input type-password" placeholder="管理员账号">
+        </div>
+        <div class="admin-gap"></div>
+        <div class="settings-row">
+          <input type="password" id="adminPwd" class="settings-input type-password" placeholder="管理员密码" onkeydown="if(event.key==='Enter') adminLogin()">
           <button class="settings-btn" onclick="adminLogin()">进入</button>
         </div>
-        <div class="admin-tip">密钥由服务端校验，改码后所有设备（任何地区）实时同步。</div>
+        <div class="admin-tip">账号密码由服务端校验，改码后所有设备（任何地区）实时同步。</div>
       </div>
     </div>
 
@@ -3111,6 +3178,11 @@ body.night .scene-label{color:var(--text-muted)}
       <div class="settings-section">
         <div class="settings-label"><span class="label-icon">⌛</span>兑换记录</div>
         <div class="admin-log" id="adminLog"></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label"><span class="label-icon">☺</span>注册用户 <span style="font-weight:400;font-size:10px;color:var(--text-muted)">（+10=补10次，清零=次数归0）</span></div>
+        <div class="admin-code-list" id="adminUserList"></div>
       </div>
     </div>
   </div>
@@ -4424,6 +4496,10 @@ function saveToHistory() {
   if (history.length > 20) history.pop();
   localStorage.setItem('ggooat_history', JSON.stringify(history));
   showToast('已保存到历史记录');
+  if (authUser) {
+    authUser.history = history;
+    syncProfileToCloud();
+  }
 }
 
 function openHistory() {
@@ -5020,26 +5096,42 @@ function closeHoroscope() {
 // ========== 使用次数 & 兑换码 ==========
 var INITIAL_CREDITS = 5;
 
-/* ===== 云端兑换码后端（Cloudflare Worker + KV） =====
-   - 管理员在后台改码 → 写入云端 → 所有设备（任何地区）读到同一份码表
-   - 无离线兜底：兑换、后台全部以云端为准（避免本地假成功）
+/* ===== 云端后端（Cloudflare Worker + KV） =====
+   - 兑换码：管理员后台改码 → 云端 → 所有设备同步
+   - 用户系统：注册/登录后，次数、昵称头像、历史记录云端同步
+   - 无离线兜底：兑换、登录一律以云端为准
 */
 var REDEEM_API = 'https://api.ggooat.xyz';
-var ADMIN_KEY_STORE = 'ggooat_admin_key';
+var ADMIN_KEY_STORE = 'ggooat_admin_key';          // 管理员会话 token（sessionStorage）
+var AUTH_TOKEN_KEY = 'ggooat_auth_token';          // 用户会话 token（localStorage）
+var USER_CACHE_KEY = 'ggooat_user';                // 用户档案缓存
 
-var adminKey = '';
-try { adminKey = sessionStorage.getItem(ADMIN_KEY_STORE) || ''; } catch (e) { adminKey = ''; }
+var adminToken = '';
+try { adminToken = sessionStorage.getItem(ADMIN_KEY_STORE) || ''; } catch (e) { adminToken = ''; }
+
+var authUser = null;   // {username, nickname, avatar, credits, history}
+try { authUser = JSON.parse(localStorage.getItem(USER_CACHE_KEY) || 'null'); } catch (e) { authUser = null; }
+
 var adminCodesCache = null;
 var adminLogsCache = null;
+var adminUsersCache = [];
 
-// 统一请求封装（8 秒超时）
+function getAuthToken() {
+  try { return localStorage.getItem(AUTH_TOKEN_KEY) || ''; } catch (e) { return ''; }
+}
+
+// 统一请求封装（8 秒超时；自动带登录态）
 function apiFetch(path, body, admin) {
   var opt = {
     method: body ? 'POST' : 'GET',
     headers: { 'Content-Type': 'application/json' }
   };
   if (body) opt.body = JSON.stringify(body);
-  if (admin) opt.headers['X-Admin-Key'] = adminKey;
+  if (admin) {
+    opt.headers['X-Admin-Token'] = adminToken;
+  } else if (getAuthToken()) {
+    opt.headers['Authorization'] = 'Bearer ' + getAuthToken();
+  }
   var ctrl = null;
   if (typeof AbortController !== 'undefined') {
     ctrl = new AbortController();
@@ -5072,6 +5164,138 @@ function renderCredits() {
   if (el) el.textContent = getCredits();
 }
 
+/* ===== 账号系统（注册/登录/云端同步） ===== */
+
+function saveAuthUser(profile) {
+  authUser = profile || null;
+  try {
+    if (authUser) localStorage.setItem(USER_CACHE_KEY, JSON.stringify(authUser));
+    else localStorage.removeItem(USER_CACHE_KEY);
+  } catch (e) { /* 忽略 */ }
+}
+
+function applyProfileToUI() {
+  renderCredits();
+  renderAccount();
+  var nicknameEl = document.getElementById('profileNickname');
+  if (nicknameEl && authUser && authUser.nickname) nicknameEl.value = authUser.nickname;
+  var avatarEl = document.getElementById('profileAvatar');
+  if (avatarEl && authUser && authUser.avatar) avatarEl.style.backgroundImage = "url('" + authUser.avatar + "')";
+  var history = (authUser && Array.isArray(authUser.history) && authUser.history.length) ? authUser.history : null;
+  if (history) {
+    try { localStorage.setItem('ggooat_history', JSON.stringify(history)); } catch (e) { /* 忽略 */ }
+    if (typeof renderHistory === 'function' && document.getElementById('historyScreen').classList.contains('open')) renderHistory();
+  }
+}
+
+function doRegister() {
+  var u = document.getElementById('authUser').value.trim();
+  var p = document.getElementById('authPass').value;
+  if (!u || !p) { showToast('请输入账号和密码'); return; }
+  var btn = document.getElementById('authSubmit');
+  btn.disabled = true; btn.textContent = '注册中…';
+  apiFetch('/api/auth/register', { username: u, password: p }).then(function (res) {
+    btn.disabled = false; btn.textContent = '注册并登录';
+    if (res && res.ok) {
+      try { localStorage.setItem(AUTH_TOKEN_KEY, res.token); } catch (e) { /* 忽略 */ }
+      saveAuthUser(res.profile);
+      setCredits(res.profile.credits);
+      applyProfileToUI();
+      document.getElementById('authPass').value = '';
+      showToast('注册成功！欢迎 ' + res.profile.username);
+    } else {
+      showToast((res && res.msg) || '注册失败');
+    }
+  }).catch(function () { btn.disabled = false; btn.textContent = '注册并登录'; showToast('网络异常，请稍后重试'); });
+}
+
+function doLogin() {
+  var u = document.getElementById('authUser').value.trim();
+  var p = document.getElementById('authPass').value;
+  if (!u || !p) { showToast('请输入账号和密码'); return; }
+  var btn = document.getElementById('authSubmit');
+  btn.disabled = true; btn.textContent = '登录中…';
+  apiFetch('/api/auth/login', { username: u, password: p }).then(function (res) {
+    btn.disabled = false; btn.textContent = '登录';
+    if (res && res.ok) {
+      try { localStorage.setItem(AUTH_TOKEN_KEY, res.token); } catch (e) { /* 忽略 */ }
+      saveAuthUser(res.profile);
+      setCredits(res.profile.credits);
+      applyProfileToUI();
+      document.getElementById('authPass').value = '';
+      showToast('欢迎回来，' + res.profile.username);
+    } else {
+      showToast((res && res.msg) || '登录失败');
+    }
+  }).catch(function () { btn.disabled = false; btn.textContent = '登录'; showToast('网络异常，请稍后重试'); });
+}
+
+function doLogout() {
+  var token = getAuthToken();
+  if (token) apiFetch('/api/auth/logout', { token: token });
+  try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) { /* 忽略 */ }
+  saveAuthUser(null);
+  renderAccount();
+  showToast('已退出登录（本地数据保留）');
+}
+
+// 登录态下：把本地昵称/头像/历史推到云端
+function syncProfileToCloud() {
+  if (!getAuthToken() || !authUser) return;
+  var history = [];
+  try { history = JSON.parse(localStorage.getItem('ggooat_history') || '[]'); } catch (e) { history = []; }
+  var nicknameEl = document.getElementById('profileNickname');
+  apiFetch('/api/user/sync', {
+    profile: { nickname: nicknameEl ? nicknameEl.value : (authUser.nickname || ''), avatar: authUser.avatar || '' },
+    history: history
+  }).then(function (res) {
+    if (res && res.ok) saveAuthUser(res.profile);
+  }).catch(function () { /* 静默失败 */ });
+}
+
+// 启动时恢复登录态
+function restoreSession() {
+  if (!getAuthToken()) { renderAccount(); return; }
+  apiFetch('/api/user/me').then(function (res) {
+    if (res && res.ok) {
+      saveAuthUser(res.profile);
+      setCredits(res.profile.credits);
+      applyProfileToUI();
+    } else {
+      // 会话过期
+      try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) { /* 忽略 */ }
+      saveAuthUser(null);
+      renderAccount();
+    }
+  }).catch(function () { renderAccount(); });
+}
+
+function renderAccount() {
+  var loggedBox = document.getElementById('accountLogged');
+  var loginBox = document.getElementById('accountLogin');
+  if (!loggedBox || !loginBox) return;
+  if (authUser) {
+    loggedBox.style.display = '';
+    loginBox.style.display = 'none';
+    document.getElementById('accountName').textContent = authUser.username;
+    document.getElementById('accountSync').textContent = '云端次数：' + authUser.credits + ' · 云端记录：' +
+      (Array.isArray(authUser.history) ? authUser.history.length : 0) + ' 条';
+  } else {
+    loggedBox.style.display = 'none';
+    loginBox.style.display = '';
+  }
+}
+
+// 登录用户消耗 1 次（先本地扣，再云端校正）
+function spendOneCredit(current) {
+  setCredits(current - 1);
+  if (!getAuthToken()) return;
+  apiFetch('/api/user/spend', {}).then(function (res) {
+    if (res && res.ok && typeof res.credits === 'number') setCredits(res.credits);
+    if (authUser) authUser.credits = res.credits;
+  }).catch(function () { /* 网络差时以本地为准，下次操作会再同步 */ });
+}
+
 function redeemCode() {
   var input = document.getElementById('redeemInput');
   if (!input) return;
@@ -5090,7 +5314,9 @@ function redeemCode() {
   apiFetch('/api/redeem', { code: code }).then(function (res) {
     done();
     if (res && res.ok) {
-      setCredits(res.count);
+      if (typeof res.credits === 'number') setCredits(res.credits);
+      else setCredits(res.count);
+      if (authUser) authUser.credits = getCredits();
       input.value = '';
       showToast('兑换成功！当前剩余次数 ' + getCredits() + ' 次');
       return;
@@ -5109,6 +5335,7 @@ function openAdmin() {
   document.getElementById('adminScreen').classList.add('open');
   document.getElementById('adminGate').style.display = '';
   document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('adminUser').value = '';
   document.getElementById('adminPwd').value = '';
   document.getElementById('adminCreditsInput').value = getCredits();
 }
@@ -5118,19 +5345,19 @@ function closeAdmin() {
 }
 
 function adminLogin() {
+  var user = (document.getElementById('adminUser').value || '').trim();
   var pwd = (document.getElementById('adminPwd').value || '').trim();
-  if (!pwd) { showToast('请输入管理密钥'); return; }
-  adminKey = pwd;
-  apiFetch('/api/admin/login', {}, true).then(function (res) {
+  if (!user || !pwd) { showToast('请输入管理员账号和密码'); return; }
+  apiFetch('/api/admin/login', { user: user, pass: pwd }).then(function (res) {
     if (res && res.ok) {
-      try { sessionStorage.setItem(ADMIN_KEY_STORE, adminKey); } catch (e) { /* 忽略 */ }
+      adminToken = res.token;
+      try { sessionStorage.setItem(ADMIN_KEY_STORE, adminToken); } catch (e) { /* 忽略 */ }
       enterAdminPanel();
       return;
     }
-    adminKey = '';
-    showToast((res && res.msg) || '管理密钥错误');
+    adminToken = '';
+    showToast((res && res.msg) || '账号或密码错误');
   }).catch(function () {
-    adminKey = '';
     showToast('无法连接服务器，请检查网络');
   });
 }
@@ -5141,7 +5368,61 @@ function enterAdminPanel() {
   document.getElementById('adminCreditsInput').value = getCredits();
   loadAdminCodes();
   loadAdminLogs();
+  loadAdminUsers();
   showToast('已连接云端：改码后所有设备实时同步');
+}
+
+// 拉取注册用户列表
+function loadAdminUsers() {
+  apiFetch('/api/admin/users', { _: 1 }, true).then(function (res) {
+    adminUsersCache = (res && res.ok && Object.prototype.toString.call(res.users) === '[object Array]') ? res.users : [];
+    renderAdminUsers();
+  }).catch(function () {
+    adminUsersCache = [];
+    renderAdminUsers();
+  });
+}
+
+function renderAdminUsers() {
+  var el = document.getElementById('adminUserList');
+  if (!el) return;
+  if (!adminUsersCache.length) {
+    el.innerHTML = '<div class="admin-empty">还没有用户注册</div>';
+    return;
+  }
+  el.innerHTML = adminUsersCache.map(function (u) {
+    return '<div class="admin-code-item">' +
+      '<div class="admin-code-main">' +
+        '<div class="admin-code-name">' + u.username + '</div>' +
+        '<div class="admin-code-meta">剩余 ' + u.credits + ' 次 · 记录 ' + (u.historyCount || 0) + ' 条' +
+        (u.lastSeen ? ' · 最近活跃 ' + u.lastSeen : '') + '</div>' +
+      '</div>' +
+      '<div class="admin-code-actions">' +
+        '<button class="admin-icon-btn" type="button" title="补 10 次">+10</button>' +
+        '<button class="admin-icon-btn danger" type="button" title="清零次数">清零</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  // 绑定按钮
+  var items = el.querySelectorAll('.admin-code-item');
+  adminUsersCache.forEach(function (u, i) {
+    var plus = items[i].querySelector('.admin-icon-btn:not(.danger)');
+    var zero = items[i].querySelector('.admin-icon-btn.danger');
+    if (plus) plus.onclick = function () { adminSetUserCredits(u.username, (parseInt(u.credits, 10) || 0) + 10); };
+    if (zero) zero.onclick = function () { adminSetUserCredits(u.username, 0); };
+  });
+}
+
+function adminSetUserCredits(username, credits) {
+  if (!adminToken) { showToast('请先登录后台'); return; }
+  apiFetch('/api/admin/setuser', { username: username, credits: credits }, true).then(function (res) {
+    if (res && res.ok) {
+      showToast(res.msg || '已设置');
+      loadAdminUsers();
+    } else {
+      showToast((res && res.msg) || '设置失败');
+    }
+  }).catch(function () { showToast('网络异常，设置失败'); });
 }
 
 // 从云端拉取码表
@@ -5216,7 +5497,7 @@ function addRedeemCode() {
   if (!/^[A-Z0-9_-]{2,20}$/.test(code)) { showToast('兑换码仅支持 2-20 位字母或数字'); return; }
   if (isNaN(count) || count < 0) { showToast('请输入有效的次数'); return; }
 
-  if (!adminKey) { showToast('登录已过期，请重新进入后台'); return; }
+  if (!adminToken) { showToast('登录已过期，请重新进入后台'); return; }
 
   apiFetch('/api/admin/save', { code: code, count: count, maxUses: maxUses, note: note }, true).then(function (res) {
     if (res && res.ok) {
@@ -5238,7 +5519,7 @@ function addRedeemCode() {
 }
 
 function deleteRedeemCode(code) {
-  if (!adminKey) { showToast('登录已过期，请重新进入后台'); return; }
+  if (!adminToken) { showToast('登录已过期，请重新进入后台'); return; }
   apiFetch('/api/admin/delete', { code: code }, true).then(function (res) {
     if (res && res.ok) {
       if (Object.prototype.toString.call(res.codes) === '[object Array]') adminCodesCache = res.codes;
@@ -5258,7 +5539,14 @@ function adminSetCredits() {
     return;
   }
   setCredits(val);
-  showToast('本机次数已设为 ' + getCredits());
+  if (getAuthToken()) {
+    apiFetch('/api/user/setcredits', { credits: val }).then(function (res) {
+      if (res && res.ok) showToast('次数已同步到云端：' + val);
+      else showToast('本地已设置，云端同步失败');
+    }).catch(function () { showToast('本地已设置，云端同步失败'); });
+  } else {
+    showToast('本机次数已设为 ' + getCredits());
+  }
 }
 
 function renderAdminLog() {
@@ -5352,6 +5640,7 @@ function saveNickname() {
     saveUserProfile(profile);
     renderProfile();
     showToast('昵称已修改');
+    if (authUser) { authUser.nickname = newName; syncProfileToCloud(); }
   }
 }
 
@@ -5362,7 +5651,7 @@ function uploadAvatar() {
   input.onchange = function(e) {
     var file = e.target.files[0];
     if (!file) return;
-    
+
     var reader = new FileReader();
     reader.onload = function(event) {
       var profile = getUserProfile();
@@ -5370,6 +5659,10 @@ function uploadAvatar() {
       saveUserProfile(profile);
       renderProfile();
       showToast('头像已更新');
+      if (authUser) {
+        authUser.avatar = event.target.result;
+        syncProfileToCloud();
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -5395,8 +5688,8 @@ function goToReading() {
     return;
   }
 
-  // 每次解读消耗 1 次
-  setCredits(credits - 1);
+  // 每次解读消耗 1 次（登录用户云端扣减）
+  spendOneCredit(credits);
 
   document.getElementById('readingScreen').classList.add('open');
 
@@ -5658,6 +5951,8 @@ function viewHistoryRecord(id) {
   var savedTheme = 'day';
   try { savedTheme = localStorage.getItem(THEME_KEY) || 'day'; } catch (e) { /* 忽略 */ }
   applyTheme(savedTheme);
+  // 恢复账号登录态（拉取云端次数/昵称/历史）
+  restoreSession();
   // 兑换码后台唯一入口：https://ggooat.xyz/admin/ （或 #admin）
   if (location.hash === '#admin') setTimeout(openAdmin, 300);
   // 初始化 iOS 26 导航指示器
