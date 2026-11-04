@@ -3335,7 +3335,7 @@ body.night .scene-label{color:var(--text-muted)}
           <input type="email" id="emailLoginUser" class="login-input" placeholder="邮箱地址" maxlength="48" autocomplete="email">
         </div>
         <div class="login-field login-field-code">
-          <input type="text" id="emailLoginCode" class="login-input" placeholder="6位验证码" maxlength="8" inputmode="numeric"
+          <input type="text" id="emailLoginCode" class="login-input" placeholder="输入邮件中的验证码" maxlength="10" inputmode="numeric"
                  style="flex:1;border-radius:12px 0 0 12px;border-right:none" onkeydown="if(event.key==='Enter') doEmailLogin()">
           <button class="login-btn email-code-btn" id="emailCodeBtn" onclick="sendEmailCode()">获取验证码</button>
         </div>
