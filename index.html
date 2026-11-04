@@ -949,6 +949,10 @@ body{
   z-index:50;
   position:relative;
 }
+.admin-code-note{
+  font-size:9px;color:var(--text-muted);font-weight:400;
+  margin-left:5px;opacity:0.9;
+}
 .select-hint{
   font-size:10px;color:var(--text-muted);
   letter-spacing:0.04em;text-align:center;
@@ -3068,10 +3072,10 @@ body.night .scene-label{color:var(--text-muted)}
           <span class="label-icon">✦</span>管理员密码
         </div>
         <div class="settings-row">
-          <input type="password" id="adminPwd" class="settings-input type-password" placeholder="请输入管理密码" onkeydown="if(event.key==='Enter') adminLogin()">
+          <input type="password" id="adminPwd" class="settings-input type-password" placeholder="请输入管理密钥" onkeydown="if(event.key==='Enter') adminLogin()">
           <button class="settings-btn" onclick="adminLogin()">进入</button>
         </div>
-        <div class="admin-tip">仅开发者可进入，用于管理兑换码与发放次数。</div>
+        <div class="admin-tip">密钥由服务端校验，改码后所有设备（任何地区）实时同步。</div>
       </div>
     </div>
 
@@ -3082,8 +3086,12 @@ body.night .scene-label{color:var(--text-muted)}
         <input type="text" id="newCodeInput" class="settings-input" placeholder="兑换码，例如 KFZ666">
         <div class="admin-gap"></div>
         <input type="number" id="newCodeCount" class="settings-input" placeholder="兑换后剩余次数，例如 99999">
+        <div class="admin-gap"></div>
+        <input type="number" id="newCodeLimit" class="settings-input" placeholder="全局使用上限（0 或留空 = 不限）">
+        <div class="admin-gap"></div>
+        <input type="text" id="newCodeNote" class="settings-input" placeholder="备注，例如 新手礼包（可选）">
         <button class="settings-save-btn" style="margin-top:14px" onclick="addRedeemCode()"><span>保存兑换码 ✦</span></button>
-        <div class="admin-hint">同名兑换码会覆盖原次数；兑换后次数为「直接设定」而非累加。</div>
+        <div class="admin-hint">保存后立刻写入云端，所有设备下一分钟起同步；同名覆盖次数。</div>
       </div>
 
       <div class="settings-section">
@@ -5012,14 +5020,45 @@ function closeHoroscope() {
 // ========== 使用次数 & 兑换码 ==========
 var INITIAL_CREDITS = 5;
 
-// 后台管理密码（可自行修改）
-var ADMIN_PASSWORD = 'kfz888';
+/* ===== 云端兑换码后端（Cloudflare Worker + KV） =====
+   - 管理员在后台改码 → 写入云端 → 所有设备（任何地区）读到同一份码表
+   - 断网时自动回退到本机缓存，不影响离线使用
+*/
+var REDEEM_API = 'https://api.ggooat.xyz';
+var ADMIN_KEY_STORE = 'ggooat_admin_key';
+var ADMIN_PASSWORD = 'kfz888';            // 仅离线兜底密码
 var CODE_STORE_KEY = 'ggooat_redeem_codes';
 var REDEEM_LOG_KEY = 'ggooat_redeem_log';
-// 默认兑换码（不区分大小写）：count 为兑换后的剩余次数
+// 离线兜底兑换码（count 为兑换后的剩余次数）
 var DEFAULT_REDEEM_CODES = [
   { code: 'KFZ666', count: 99999, note: '开发者兑换码', used: 0 }
 ];
+
+var adminKey = '';
+try { adminKey = sessionStorage.getItem(ADMIN_KEY_STORE) || ''; } catch (e) { adminKey = ''; }
+var adminOffline = false;
+var adminCodesCache = null;
+var adminLogsCache = null;
+
+// 统一请求封装（8 秒超时）
+function apiFetch(path, body, admin) {
+  var opt = {
+    method: body ? 'POST' : 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  };
+  if (body) opt.body = JSON.stringify(body);
+  if (admin) opt.headers['X-Admin-Key'] = adminKey;
+  var ctrl = null;
+  if (typeof AbortController !== 'undefined') {
+    ctrl = new AbortController();
+    opt.signal = ctrl.signal;
+  }
+  var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+  return fetch(REDEEM_API + path, opt).then(function (r) {
+    clearTimeout(timer);
+    return r.json().catch(function () { return { ok: false, msg: '服务器返回异常' }; });
+  });
+}
 
 function getRedeemCodes() {
   var saved = localStorage.getItem(CODE_STORE_KEY);
@@ -5086,24 +5125,33 @@ function redeemCode() {
     showToast('请输入兑换码');
     return;
   }
-  var item = findRedeemCode(code);
-  if (!item) {
-    showToast('兑换码无效，请检查后重试');
-    return;
+  var btn = document.querySelector('.redeem-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '兑换中'; }
+
+  function done() {
+    if (btn) { btn.disabled = false; btn.textContent = '兑换'; }
   }
-  setCredits(item.count);
-  // 记录使用次数与兑换日志
-  var list = getRedeemCodes();
-  for (var i = 0; i < list.length; i++) {
-    if (String(list[i].code).toUpperCase() === code) {
-      list[i].used = (parseInt(list[i].used, 10) || 0) + 1;
-      list[i].lastUsed = new Date().toLocaleString('zh-CN');
+
+  apiFetch('/api/redeem', { code: code }).then(function (res) {
+    done();
+    if (res && res.ok) {
+      setCredits(res.count);
+      input.value = '';
+      showToast('兑换成功！当前剩余次数 ' + getCredits() + ' 次');
+      return;
     }
-  }
-  saveRedeemCodes(list);
-  pushRedeemLog(code);
-  input.value = '';
-  showToast('兑换成功！当前剩余次数 ' + getCredits() + ' 次');
+    if (res && res.msg) { showToast(res.msg); return; }
+    throw new Error('bad-response');
+  }).catch(function () {
+    done();
+    // 离线兜底：用本机缓存的码
+    var item = findRedeemCode(code);
+    if (!item) { showToast('网络异常，请稍后重试'); return; }
+    setCredits(item.count);
+    pushRedeemLog(code);
+    input.value = '';
+    showToast('（离线）兑换成功！剩余 ' + getCredits() + ' 次');
+  });
 }
 
 // ========== 兑换码管理后台 ==========
@@ -5114,8 +5162,6 @@ function openAdmin() {
   document.getElementById('adminPanel').style.display = 'none';
   document.getElementById('adminPwd').value = '';
   document.getElementById('adminCreditsInput').value = getCredits();
-  renderAdminCodes();
-  renderAdminLog();
 }
 
 function closeAdmin() {
@@ -5124,24 +5170,74 @@ function closeAdmin() {
 
 function adminLogin() {
   var pwd = (document.getElementById('adminPwd').value || '').trim();
-  if (pwd !== ADMIN_PASSWORD) {
-    showToast('管理密码错误');
-    return;
-  }
+  if (!pwd) { showToast('请输入管理密钥'); return; }
+  adminKey = pwd;
+  apiFetch('/api/admin/login', {}, true).then(function (res) {
+    if (res && res.ok) {
+      try { sessionStorage.setItem(ADMIN_KEY_STORE, adminKey); } catch (e) { /* 忽略 */ }
+      enterAdminPanel(false);
+      return;
+    }
+    adminKey = '';
+    if (pwd === ADMIN_PASSWORD) { enterAdminPanel(true); return; }   // 离线兜底
+    showToast((res && res.msg) || '管理密钥错误');
+  }).catch(function () {
+    adminKey = '';
+    if (pwd === ADMIN_PASSWORD) { enterAdminPanel(true); }            // 无网络时可用旧密码
+    else showToast('无法连接服务器，请检查网络');
+  });
+}
+
+function enterAdminPanel(offline) {
+  adminOffline = !!offline;
   document.getElementById('adminGate').style.display = 'none';
   document.getElementById('adminPanel').style.display = '';
   document.getElementById('adminCreditsInput').value = getCredits();
-  renderAdminCodes();
-  renderAdminLog();
-  showToast('已进入兑换码后台');
+  if (adminOffline) {
+    adminCodesCache = null;
+    adminLogsCache = null;
+    renderAdminCodes();
+    renderAdminLog();
+    showToast('离线模式：改动只在本机生效');
+  } else {
+    loadAdminCodes();
+    loadAdminLogs();
+    showToast('已连接云端：改码后所有设备实时同步');
+  }
+}
+
+// 从云端拉取码表
+function loadAdminCodes() {
+  apiFetch('/api/admin/list', { _: 1 }, true).then(function (res) {
+    if (res && res.ok && Object.prototype.toString.call(res.codes) === '[object Array]') {
+      adminCodesCache = res.codes;
+    } else {
+      adminCodesCache = [];
+    }
+    renderAdminCodes();
+  }).catch(function () {
+    adminCodesCache = [];
+    renderAdminCodes();
+  });
+}
+
+// 从云端拉取兑换记录
+function loadAdminLogs() {
+  apiFetch('/api/admin/logs', { _: 1 }, true).then(function (res) {
+    adminLogsCache = (res && res.ok && Object.prototype.toString.call(res.logs) === '[object Array]') ? res.logs : [];
+    renderAdminLog();
+  }).catch(function () {
+    adminLogsCache = [];
+    renderAdminLog();
+  });
 }
 
 function renderAdminCodes() {
   var listEl = document.getElementById('adminCodeList');
   if (!listEl) return;
-  var codes = getRedeemCodes();
+  var codes = (adminCodesCache !== null) ? adminCodesCache : getRedeemCodes();
   if (!codes.length) {
-    listEl.innerHTML = '<div class="admin-empty">暂无兑换码，请在上方添加</div>';
+    listEl.innerHTML = '<div class="admin-empty">' + (adminOffline ? '离线模式：本机暂无兑换码' : '云端暂无兑换码，请在上方添加') + '</div>';
     return;
   }
   listEl.innerHTML = '';
@@ -5149,10 +5245,12 @@ function renderAdminCodes() {
     var row = document.createElement('div');
     row.className = 'admin-code-item';
     var used = parseInt(item.used, 10) || 0;
+    var maxUses = parseInt(item.maxUses, 10) || 0;
+    var limitText = maxUses > 0 ? (' / 上限 ' + maxUses) : ' / 不限次';
     row.innerHTML =
       '<div class="admin-code-main">' +
-        '<div class="admin-code-name">' + item.code + '</div>' +
-        '<div class="admin-code-meta">已兑换 ' + used + ' 次' + (item.lastUsed ? ' · 最近 ' + item.lastUsed : '') + '</div>' +
+        '<div class="admin-code-name">' + item.code + (item.note ? ' <span class="admin-code-note">' + item.note + '</span>' : '') + '</div>' +
+        '<div class="admin-code-meta">已兑换 ' + used + limitText + (item.lastUsed ? ' · 最近 ' + item.lastUsed : '') + '</div>' +
       '</div>' +
       '<div class="admin-code-count">' + item.count + '</div>';
     var delBtn = document.createElement('button');
@@ -5169,44 +5267,69 @@ function renderAdminCodes() {
 function addRedeemCode() {
   var codeInput = document.getElementById('newCodeInput');
   var countInput = document.getElementById('newCodeCount');
+  var limitInput = document.getElementById('newCodeLimit');
+  var noteInput = document.getElementById('newCodeNote');
   var code = (codeInput.value || '').trim().toUpperCase();
   var count = parseInt(countInput.value, 10);
-  if (!code) {
-    showToast('请输入兑换码');
+  var maxUses = limitInput ? Math.max(0, parseInt(limitInput.value, 10) || 0) : 0;
+  var note = noteInput ? (noteInput.value || '').trim().slice(0, 40) : '';
+
+  if (!code) { showToast('请输入兑换码'); return; }
+  if (!/^[A-Z0-9_-]{2,20}$/.test(code)) { showToast('兑换码仅支持 2-20 位字母或数字'); return; }
+  if (isNaN(count) || count < 0) { showToast('请输入有效的次数'); return; }
+
+  if (adminOffline || !adminKey) {
+    // 离线：只写本机
+    var codes = getRedeemCodes();
+    var found = null;
+    for (var i = 0; i < codes.length; i++) {
+      if (String(codes[i].code).toUpperCase() === code) { found = codes[i]; break; }
+    }
+    if (found) { found.count = count; found.maxUses = maxUses; found.note = note; }
+    else { codes.push({ code: code, count: count, maxUses: maxUses, note: note, used: 0 }); }
+    saveRedeemCodes(codes);
+    afterSave(code);
     return;
   }
-  if (!/^[A-Z0-9_-]{2,20}$/.test(code)) {
-    showToast('兑换码仅支持 2-20 位字母或数字');
-    return;
+
+  apiFetch('/api/admin/save', { code: code, count: count, maxUses: maxUses, note: note }, true).then(function (res) {
+    if (res && res.ok) {
+      if (Object.prototype.toString.call(res.codes) === '[object Array]') adminCodesCache = res.codes;
+      afterSave(code);
+    } else {
+      showToast((res && res.msg) || '保存失败');
+    }
+  }).catch(function () { showToast('网络异常，保存失败'); });
+
+  function afterSave(c) {
+    codeInput.value = '';
+    countInput.value = '';
+    if (limitInput) limitInput.value = '';
+    if (noteInput) noteInput.value = '';
+    renderAdminCodes();
+    showToast('兑换码 ' + c + ' 已保存，所有设备同步生效');
   }
-  if (isNaN(count) || count < 0) {
-    showToast('请输入有效的次数');
-    return;
-  }
-  var codes = getRedeemCodes();
-  var found = null;
-  for (var i = 0; i < codes.length; i++) {
-    if (String(codes[i].code).toUpperCase() === code) { found = codes[i]; break; }
-  }
-  if (found) {
-    found.count = count;
-  } else {
-    codes.push({ code: code, count: count, used: 0 });
-  }
-  saveRedeemCodes(codes);
-  codeInput.value = '';
-  countInput.value = '';
-  renderAdminCodes();
-  showToast('兑换码 ' + code + ' 已保存');
 }
 
 function deleteRedeemCode(code) {
-  var codes = getRedeemCodes().filter(function(item) {
-    return String(item.code).toUpperCase() !== String(code).toUpperCase();
-  });
-  saveRedeemCodes(codes);
-  renderAdminCodes();
-  showToast('已删除兑换码 ' + code);
+  if (adminOffline || !adminKey) {
+    var codes = getRedeemCodes().filter(function(item) {
+      return String(item.code).toUpperCase() !== String(code).toUpperCase();
+    });
+    saveRedeemCodes(codes);
+    renderAdminCodes();
+    showToast('已删除兑换码 ' + code);
+    return;
+  }
+  apiFetch('/api/admin/delete', { code: code }, true).then(function (res) {
+    if (res && res.ok) {
+      if (Object.prototype.toString.call(res.codes) === '[object Array]') adminCodesCache = res.codes;
+      renderAdminCodes();
+      showToast('已删除兑换码 ' + code);
+    } else {
+      showToast((res && res.msg) || '删除失败');
+    }
+  }).catch(function () { showToast('网络异常，删除失败'); });
 }
 
 function adminSetCredits() {
@@ -5223,12 +5346,14 @@ function adminSetCredits() {
 function renderAdminLog() {
   var logEl = document.getElementById('adminLog');
   if (!logEl) return;
-  var log = [];
-  try {
-    log = JSON.parse(localStorage.getItem(REDEEM_LOG_KEY) || '[]');
-  } catch (e) { log = []; }
-  if (!log.length) {
-    logEl.innerHTML = '<div class="admin-empty">暂无兑换记录</div>';
+  var log = null;
+  if (adminLogsCache !== null) {
+    log = adminLogsCache;
+  } else {
+    try { log = JSON.parse(localStorage.getItem(REDEEM_LOG_KEY) || '[]'); } catch (e) { log = []; }
+  }
+  if (!log || !log.length) {
+    logEl.innerHTML = '<div class="admin-empty">' + (adminOffline ? '离线模式：本机暂无记录' : '云端暂无兑换记录') + '</div>';
     return;
   }
   logEl.innerHTML = log.map(function(item) {
