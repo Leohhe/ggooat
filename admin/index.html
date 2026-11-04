@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#f5f0ff">
+<title>管理后台 · GgooAt</title>
+<style>
+  html,body{height:100%;margin:0}
+  body{
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg,#fcfcff 0%,#f5f0ff 42%,#ede6ff 72%,#e8ddff 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:#4b3f7a;
+  }
+  .box{text-align:center;padding:0 24px}
+  .dot{
+    width:44px;height:44px;margin:0 auto 18px;border-radius:50%;
+    border:2.5px solid rgba(124,93,250,0.18);border-top-color:#7c5dfa;
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .txt{font-size:14px;letter-spacing:0.08em;opacity:0.8}
+  a{color:#7c5dfa}
+  @media (prefers-color-scheme: dark){
+    body{background:#0d0a1c;color:#cfc6f5}
+    .dot{border-color:rgba(167,139,255,0.2);border-top-color:#a78bff}
+  }
+</style>
+<script>
+  // 进入后台：跳转到主应用并自动打开后台登录
+  location.replace('../#admin');
+</script>
+</head>
+<body>
+  <div class="box">
+    <div class="dot"></div>
+    <div class="txt">正在进入管理后台…</div>
+    <div class="txt" style="margin-top:10px;font-size:12px">
+      如果没有自动跳转，<a href="../#admin">点这里</a>
+    </div>
+  </div>
+</body>
+</html>
