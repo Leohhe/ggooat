@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>GgooAt · 塔罗</title>
+<meta name="theme-color" content="#f5f0ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preload" href="fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/cinzel-latin-ext.woff2" as="font" type="font/woff2" crossorigin>
 <style>
@@ -49,8 +53,15 @@
 }
 
 /* ========== 全局 ========== */
+html{
+  /* 兜底背景：iOS 状态栏/刘海区域不再露白 */
+  height:100%;
+  background:linear-gradient(180deg,#fcfcff 0%,#f5f0ff 42%,#ede6ff 72%,#e8ddff 100%);
+}
+body.night html,html:has(body.night){background:#0b0818}
 body{
-  background:var(--bg-light);
+  background:linear-gradient(180deg,#fcfcff 0%,#f5f0ff 42%,#ede6ff 72%,#e8ddff 100%);
+  background-attachment:fixed;
   min-height:100vh;
   min-height:100dvh;
   display:flex;
@@ -123,6 +134,7 @@ body{
 .phone{
   position:relative;z-index:10;
   width:402px;
+  height:100vh;      /* 老浏览器兜底 */
   height:100dvh;
   max-height:874px;
   background:rgba(255,255,255,0.55);
@@ -143,7 +155,14 @@ body{
   flex-direction:column;
 }
 @media (max-width: 440px) {
-  .phone{width:100%;height:100dvh;max-height:none;border-radius:0;border:none;box-shadow:none}
+  .phone{
+    width:100%;height:100vh;height:100dvh;max-height:none;
+    border-radius:0;border:none;box-shadow:none;
+    /* 移动端去掉大面积毛玻璃，改为不透明底色（毛玻璃是卡顿主因） */
+    background:linear-gradient(180deg,#fbfaff 0%,#f5f0ff 45%,#ece5ff 100%);
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+  }
+  body.night .phone{background:linear-gradient(180deg,#0d0a1c 0%,#130e28 50%,#181134 100%)}
   .screen,.settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{border-radius:0}
   /* ===== iPhone 16 / 16 Pro（402×874）等灵动岛机型安全区适配 ===== */
   .header{padding-top:calc(16px + env(safe-area-inset-top, 0px))}
@@ -167,6 +186,26 @@ body{
   .nav-bar{width:calc(100% - 24px);max-width:none;height:54px;border-radius:27px;bottom:calc(12px + env(safe-area-inset-bottom, 0px))}
   .nav-indicator{height:38px;border-radius:20px;top:8px}
   .nav-item svg{width:20px;height:20px}
+}
+
+/* ========== 移动端性能优化（关掉全屏常驻动画与毛玻璃） ========== */
+@media (max-width: 440px), (pointer: coarse) {
+  .bg-canvas,.bg-rays,.bg-glow,.rose-window,.logo{animation:none !important}
+  .bg-rays{opacity:0.5}
+  .bg-glow{opacity:0.7}
+  .rose-window{opacity:0.26}
+  .scene-card,.nav-bar,.card-detail-modal,.horoscope-modal,.toast,
+  .spread-opt,.placement-slot,.icon-btn,.glass-panel{
+    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+  }
+  .focus-overlay::before{
+    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+    background:rgba(29,20,57,0.62);
+  }
+  .wheel-card{will-change:auto}
+  .screen,.settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{
+    transition:transform 0.42s var(--transition-bounce);
+  }
 }
 /* 刘海已取消 */
 
@@ -910,8 +949,14 @@ body{
   z-index:50;
   position:relative;
 }
+.select-hint{
+  font-size:10px;color:var(--text-muted);
+  letter-spacing:0.04em;text-align:center;
+  padding:4px 0 2px;opacity:0.85;
+}
 .placement-slot{
   width:60px;height:98px;
+  cursor:pointer;
   border-radius:var(--radius-sm);
   background:linear-gradient(145deg, rgba(255,255,255,0.5) 0%, rgba(245,240,255,0.3) 100%);
   display:flex;flex-direction:column;
@@ -979,9 +1024,12 @@ body{
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
   cursor:pointer;
-  will-change:transform,opacity;
   transform-origin:center center;
   overflow:hidden;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  contain:layout style paint;
 }
 .wheel-card img{
   width:100%;height:100%;
@@ -2747,6 +2795,7 @@ body.night .scene-label{color:var(--text-muted)}
       <!-- Step 5: 选牌轮盘 -->
       <div class="step-view" id="step5">
         <div class="step-title" style="margin-bottom:0">感应你的命运</div>
+        <div class="select-hint">滑动选牌 · 点牌预览 · 点空白收起 · 点已选的牌可取消</div>
         <div class="step5-layout">
           <div class="placement-area" id="placementArea"></div>
           <div class="wheel-area-bottom" id="wheelAreaBottom">
@@ -3796,6 +3845,13 @@ function initInfiniteWheel() {
     pArea.appendChild(slot);
   }
 
+  // 点击已选的牌即可取消（放回牌堆）
+  pArea.onclick = function (e) {
+    const slot = e.target.closest ? e.target.closest('.placement-slot') : null;
+    if (!slot || !slot.classList.contains('filled')) return;
+    removeSelectedCard(parseInt(String(slot.id).replace('pSlot', ''), 10));
+  };
+
   const wrap = document.getElementById('wheelWrap');
   wrap.querySelectorAll('.wheel-card').forEach(el => el.remove());
   wheelCardEls = [];
@@ -3804,7 +3860,8 @@ function initInfiniteWheel() {
   for (let i = 0; i < total; i++) {
     const el = document.createElement('div');
     el.className = 'wheel-card';
-    el.innerHTML = '<img src="' + getCardBackImg() + '" alt="牌背">';
+    // 用背景图代替 <img>：78 张牌只解码一次，移动端明显更流畅
+    el.style.backgroundImage = 'url("' + getCardBackImg() + '")';
 
     el.addEventListener('pointerdown', (e) => {
       el._pointerStartX = e.clientX;
@@ -3849,6 +3906,7 @@ function onWheelTouchStart(e) {
   lastTouchX = startTouchX;
   lastTouchTime = Date.now();
   wheelVelocity = 0;
+  startWheelAnim();
   e.preventDefault();
 }
 
@@ -3951,12 +4009,16 @@ function updateWheelPositions() {
 }
 
 function startWheelAnim() {
-  stopWheelAnim();
+  if (wheelAnimFrame) return;
   function tick() {
     if (!isDragging && Math.abs(wheelVelocity) > 0.02) {
       wheelAngle += wheelVelocity * 0.16;
       wheelVelocity *= 0.93;
       updateWheelPositions();
+    } else if (!isDragging) {
+      // 惯性结束：停止 rAF 循环，避免手机持续空转耗电/掉帧
+      wheelAnimFrame = null;
+      return;
     }
     wheelAnimFrame = requestAnimationFrame(tick);
   }
@@ -4047,6 +4109,31 @@ function onWheelCardClick(deckIndex, clickedEl) {
   });
 }
 
+// 重新渲染已选牌槽位（取消某张牌后调用）
+function renderPlacementSlots() {
+  for (let i = 0; i < requiredCardCount; i++) {
+    const slot = document.getElementById('pSlot' + i);
+    if (!slot) continue;
+    const c = selectedCards[i];
+    if (!c) { slot.classList.remove('filled'); slot.innerHTML = ''; continue; }
+    slot.classList.add('filled');
+    const rev = c.isReversed ? 'transform:rotate(180deg);' : '';
+    slot.innerHTML = `<img src="${c.img}" alt="${c.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;position:absolute;inset:0;${rev}">` +
+      `<div class="slot-tiny-name" style="position:relative;z-index:1;background:rgba(255,255,255,0.85);padding:2px 6px;border-radius:8px;font-size:8px;">${c.name}</div>`;
+  }
+}
+
+// 取消第 i 张已选牌
+function removeSelectedCard(i) {
+  if (isNaN(i) || i < 0 || i >= selectedCards.length) return;
+  const card = selectedCards.splice(i, 1)[0];
+  card.selected = false;
+  card.focused = false;
+  renderPlacementSlots();
+  updateWheelPositions();
+  showToast('已取消：' + card.name);
+}
+
 function revealFocusedCard() {
   if (DOM.revealBtnWrap) DOM.revealBtnWrap.classList.remove('show');
   flipCardEl.classList.add('flipped');
@@ -4083,15 +4170,19 @@ function revealFocusedCard() {
       updateWheelPositions();
 
       if (selectedCards.length >= requiredCardCount) {
-        setTimeout(() => goStep(6), 600);
+        setTimeout(() => {
+          // 期间若用户取消了牌，就不进入下一步
+          if (selectedCards.length >= requiredCardCount) goStep(6);
+        }, 600);
       }
     }, 600);
   }, 1000);
 }
 
 function cancelFocus(event) {
-  // 只响应点击遮罩层，不响应按钮和卡牌
-  if (event.target !== document.getElementById('focusOverlay')) return;
+  // 点空白处取消：只要不是点在卡牌或「翻牌」按钮上，都算取消
+  if (event && event.target && event.target.closest &&
+      event.target.closest('.flip-card-container, .reveal-btn-wrap')) return;
   if (focusedDeckIndex === null || !flipCardEl || !focusedCardOriginalPos) return;
 
   const card = shuffledDeck[focusedDeckIndex];
