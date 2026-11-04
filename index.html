@@ -4,8 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>GgooAt · 塔罗</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/cinzel-latin-ext.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* ========== 本地字体（替代 Google Fonts，避免外链阻塞） ========== */
+@font-face{
+  font-family:'Cinzel';
+  font-style:normal;
+  font-weight:400 900;
+  font-display:swap;
+  src:url('fonts/cinzel-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face{
+  font-family:'Cinzel';
+  font-style:normal;
+  font-weight:400 900;
+  font-display:swap;
+  src:url('fonts/cinzel-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
 /* ========== 重置 & CSS 变量 ========== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -38,7 +56,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   overflow:hidden;
   user-select:none;
   color:var(--text-dark);
@@ -496,13 +514,13 @@ body{
 }
 .scene-card:hover .scene-icon{transform:scale(1.2) rotate(3deg)}
 .scene-name{
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:12px;font-weight:700;
   color:var(--text-dark);
   letter-spacing:0.08em;
 }
 .scene-desc{
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:9px;color:var(--text-muted);
   text-align:center;line-height:1.3;
 }
@@ -668,7 +686,7 @@ body{
 
 .screen-title{
   margin-top:4px;
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:24px;color:var(--text-dark);
   letter-spacing:0.12em;text-align:center;
   filter:drop-shadow(0 2px 8px rgba(124,93,250,0.1));
@@ -703,7 +721,7 @@ body{
 }
 
 .step-title{
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:16px;font-weight:600;
   color:var(--text-dark);
   margin-bottom:22px;
@@ -719,7 +737,7 @@ body{
   border-radius:var(--radius-md);
   padding:16px;
   color:var(--text-dark);
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:14px;line-height:1.6;
   resize:none;outline:none;
   box-shadow:
@@ -793,7 +811,7 @@ body{
   100%{transform:scale(1);opacity:1}
 }
 .spread-opt-name{
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:15px;font-weight:600;
   color:var(--text-dark);
   margin-bottom:6px;
@@ -814,7 +832,7 @@ body{
   backdrop-filter:blur(16px) saturate(160%);
   -webkit-backdrop-filter:blur(16px) saturate(160%);
   color:var(--divine-purple-light);
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:14px;font-weight:600;
   letter-spacing:0.1em;
   cursor:pointer;
@@ -1078,7 +1096,7 @@ body{
   z-index:0;
 }
 .flip-card-front-name{
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:13px;font-weight:700;
   color:var(--text-dark);
   position:relative;z-index:1;
@@ -1341,7 +1359,7 @@ body{
 }
 .settings-title{
   margin-top:4px;
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:28px;color:var(--text-dark);
   letter-spacing:0.15em;
   filter:drop-shadow(0 2px 8px rgba(124,93,250,0.1));
@@ -1379,7 +1397,7 @@ body{
   background:rgba(255,255,255,0.8);
   padding:0 16px;
   font-size:14px;color:var(--text-dark);
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   outline:none;
   transition:all 0.3s;
   box-shadow:0 2px 12px rgba(124,93,250,0.04);
@@ -1417,7 +1435,7 @@ body{
   background:rgba(255,255,255,0.8);
   padding:0 16px;
   font-size:14px;color:var(--text-dark);
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   outline:none;
   transition:all 0.3s;
   cursor:pointer;
@@ -1518,7 +1536,7 @@ body{
   cursor:pointer;
   appearance:none;-webkit-appearance:none;
   background:transparent;border:0;outline:none;box-shadow:none;
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   transition:opacity 0.3s;
   padding:0;margin:0;
   border-radius:0;
@@ -1533,7 +1551,7 @@ body{
   cursor:pointer;
   background:rgba(124,93,250,0.08);
   border:1px solid rgba(124,93,250,0.15);
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   transition:all 0.3s;
   padding:8px 14px;
   border-radius:10px;
@@ -1549,7 +1567,7 @@ body{
 }
 .reading-header{text-align:center;margin-bottom:24px}
 .reading-title{
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:24px;color:var(--text-dark);
   letter-spacing:0.12em;
   filter:drop-shadow(0 2px 8px rgba(124,93,250,0.1));
@@ -1680,7 +1698,7 @@ body{
   background:rgba(255,255,255,0.7);
   padding:0 14px;
   font-size:14px;color:var(--text-dark);
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   outline:none;
   transition:all 0.3s;
   box-shadow:inset 0 2px 8px rgba(124,93,250,0.03);
@@ -1787,7 +1805,7 @@ body{
 }
 .history-back:active{transform:scale(0.95)}
 .history-title{
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:24px;color:var(--text-dark);
   letter-spacing:0.12em;
   filter:drop-shadow(0 2px 8px rgba(124,93,250,0.08));
@@ -1905,7 +1923,7 @@ body{
   color:var(--divine-purple);
 }
 .horoscope-title{
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:22px;font-weight:700;
   color:var(--text-dark);
   margin-bottom:6px;
@@ -1923,7 +1941,7 @@ body{
 .horoscope-text{
   font-size:16px;color:var(--text-dark);
   line-height:2;
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
 }
 .horoscope-loading{
   display:flex;justify-content:center;gap:8px;
@@ -1986,7 +2004,7 @@ body{
   background:#f5f0ff;
 }
 .card-detail-name{
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:26px;font-weight:700;
   color:var(--divine-purple);
   margin-bottom:6px;
@@ -2116,7 +2134,7 @@ body{
   box-shadow:0 4px 14px rgba(124,93,250,0.4);
 }
 .profile-nickname{
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:18px;font-weight:700;
   color:var(--text-dark);
   cursor:pointer;
@@ -2127,7 +2145,7 @@ body{
   color:var(--divine-purple);
 }
 .profile-nickname-input{
-  font-family:'Cinzel Decorative',serif;
+  font-family:'Cinzel',serif;
   font-size:18px;font-weight:700;
   color:var(--text-dark);
   background:transparent;
@@ -2187,7 +2205,7 @@ body{
   border-radius:12px;
   border:1.5px solid rgba(124,93,250,0.18);
   background:rgba(124,93,250,0.05);
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:13px;color:var(--text-dark);
   outline:none;
   transition:all 0.3s;
@@ -2203,7 +2221,7 @@ body{
   border-radius:12px;border:none;
   background:linear-gradient(135deg,#a98bff 0%, #7c5dfa 100%);
   color:#fff;
-  font-family:'Noto Serif SC',serif;
+  font-family:'Songti SC','STSong','SimSun','Noto Serif CJK SC',serif;
   font-size:13px;font-weight:600;letter-spacing:0.05em;
   cursor:pointer;
   box-shadow:0 6px 16px rgba(124,93,250,0.28);
@@ -2541,23 +2559,23 @@ body.night .scene-label{color:var(--text-muted)}
       <div class="arch-bg"></div>
       <div class="cards-cluster" onclick="openDivination()">
         <div class="tarot-card card-pos1">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.jpg" alt="塔罗牌背"></div>
+          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
           <div class="card-shimmer"></div>
         </div>
         <div class="tarot-card card-pos2">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.jpg" alt="塔罗牌背"></div>
+          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
           <div class="card-shimmer"></div>
         </div>
         <div class="tarot-card card-pos3">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.jpg" alt="塔罗牌背"></div>
+          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
           <div class="card-shimmer"></div>
         </div>
         <div class="tarot-card card-pos4">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.jpg" alt="塔罗牌背"></div>
+          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
           <div class="card-shimmer"></div>
         </div>
         <div class="tarot-card card-pos5">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.jpg" alt="塔罗牌背"></div>
+          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
           <div class="card-shimmer"></div>
         </div>
       </div>
@@ -3177,12 +3195,12 @@ const LENORMAND_IMG_BASE = '图片素材/雷诺曼素材/';
 
 // 大阿卡纳文件名映射 (id -> 文件名)
 const majorImgNames = [
-  '0-愚人.jpg', '1-魔术师.jpg', '2-女祭司.jpg', '3-女皇.jpg',
-  '4-皇帝.jpg', '5-教皇.jpg', '6-恋人.jpg', '7-战车.jpg',
-  '8-力量.jpg', '9-隐士.jpg', '10-命运之轮.jpg', '11-正义.jpg',
-  '12-倒吊人.jpg', '13-死神.jpg', '14-节制.jpg', '15-恶魔.jpg',
-  '16-高塔.jpg', '17-星星.jpg', '18-月亮.jpg', '19-太阳.jpg',
-  '20-审判.jpg', '21-世界.jpg'
+  '0-愚人.webp', '1-魔术师.webp', '2-女祭司.webp', '3-女皇.webp',
+  '4-皇帝.webp', '5-教皇.webp', '6-恋人.webp', '7-战车.webp',
+  '8-力量.webp', '9-隐士.webp', '10-命运之轮.webp', '11-正义.webp',
+  '12-倒吊人.webp', '13-死神.webp', '14-节制.webp', '15-恶魔.webp',
+  '16-高塔.webp', '17-星星.webp', '18-月亮.webp', '19-太阳.webp',
+  '20-审判.webp', '21-世界.webp'
 ];
 
 // 小阿卡纳 suit key -> 中文前缀
@@ -3206,7 +3224,7 @@ let cardId = 22;
 minorSuits.forEach(suit => {
   minorNums.forEach(mn => {
     const fileNum = minorNumToFile[mn.num] || mn.num;
-    const imgFile = suitPrefix[suit.key] + fileNum + '.jpg';
+    const imgFile = suitPrefix[suit.key] + fileNum + '.webp';
     var meanings = minorMeanings[suit.key] && minorMeanings[suit.key][mn.num] 
       ? minorMeanings[suit.key][mn.num] 
       : { upright: suit.theme + '——' + mn.meaning, reversed: suit.theme + '（逆位）——' + mn.meaning };
@@ -3226,7 +3244,7 @@ minorSuits.forEach(suit => {
 });
 
 const tarotDeck = [...majorArcana, ...minorArcana];
-const CARD_BACK_IMG = IMG_BASE + '背面牌.jpg';
+const CARD_BACK_IMG = IMG_BASE + '背面牌.webp';
 
 // ========== 雷诺曼卡牌数据 ==========
 const lenormandCards = [
@@ -3314,10 +3332,10 @@ lenormandCards.forEach(function(card, i) {
 });
 
 const lenormandImgFiles = [
-  '1骑士.png', '2幸运草.png', '3船.png', '4房子.png', '5树.png', '6云.png', '7蛇.png', '8棺材.png', '9花束.png',
-  '10镰刀.png', '11鞭子.png', '12鸟.png', '13孩童.png', '14狐狸.png', '15熊.png', '16星星.png', '17鹳鸟.png', '18狗.png', '19塔.png',
-  '20花园.png', '21山.png', '22十字路口.png', '23老鼠.png', '24爱心.png', '25戒指.png', '26书本.png', '27信件.png', '28男人.png', '29女人.png',
-  '30百合.png', '31太阳.png', '32月亮.png', '33钥匙.png', '34鱼.png', '35锚.png', '36十字架.png'
+  '1骑士.webp', '2幸运草.webp', '3船.webp', '4房子.webp', '5树.webp', '6云.webp', '7蛇.webp', '8棺材.webp', '9花束.webp',
+  '10镰刀.webp', '11鞭子.webp', '12鸟.webp', '13孩童.webp', '14狐狸.webp', '15熊.webp', '16星星.webp', '17鹳鸟.webp', '18狗.webp', '19塔.webp',
+  '20花园.webp', '21山.webp', '22十字路口.webp', '23老鼠.webp', '24爱心.webp', '25戒指.webp', '26书本.webp', '27信件.webp', '28男人.webp', '29女人.webp',
+  '30百合.webp', '31太阳.webp', '32月亮.webp', '33钥匙.webp', '34鱼.webp', '35锚.webp', '36十字架.webp'
 ];
 
 const lenormandDeck = lenormandCards.map((c, i) => ({
@@ -3327,7 +3345,7 @@ const lenormandDeck = lenormandCards.map((c, i) => ({
   img: LENORMAND_IMG_BASE + lenormandImgFiles[i]
 }));
 
-const LENORMAND_BACK_IMG = LENORMAND_IMG_BASE + '背面.png';
+const LENORMAND_BACK_IMG = LENORMAND_IMG_BASE + '背面.webp';
 
 // ========== 当前占卜模式 ==========
 let currentDivinationMode = 'tarot'; // 'tarot' | 'lenormand'
@@ -4000,7 +4018,7 @@ function onWheelCardClick(deckIndex, clickedEl) {
         <img src="${getCardBackImg()}" alt="牌背">
       </div>
       <div class="flip-card-face flip-card-front">
-        <img src="${card.img}" alt="${card.name}" style="${reverseStyle}" onerror="this.style.display='none'">
+        <img src="${card.img}" alt="${card.name}" loading="lazy" decoding="async" style="${reverseStyle}" onerror="this.style.display='none'">
         <div class="flip-card-front-name">${card.name}</div>
         ${revHtml}
       </div>
@@ -4048,7 +4066,7 @@ function revealFocusedCard() {
       targetSlot.classList.add('filled');
       const revStyle = card.isReversed ? 'transform:rotate(180deg);' : '';
       targetSlot.innerHTML = `
-        <img src="${card.img}" alt="${card.name}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;position:absolute;inset:0;${revStyle}" onerror="this.style.display='none'">
+        <img src="${card.img}" alt="${card.name}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;border-radius:8px;position:absolute;inset:0;${revStyle}" onerror="this.style.display='none'">
         <div class="slot-tiny-name" style="position:relative;z-index:1;background:rgba(255,255,255,0.85);padding:2px 6px;border-radius:8px;font-size:8px;">${card.name}</div>
       `;
 
@@ -4142,7 +4160,7 @@ function renderSpreadLayout() {
     const imgRotate = c.isReversed ? 'transform:rotate(180deg);' : '';
 
     slot.innerHTML = `
-      <img src="${c.img}" alt="${c.name}" style="${imgRotate}" onerror="this.style.display='none'">
+      <img src="${c.img}" alt="${c.name}" loading="lazy" decoding="async" style="${imgRotate}" onerror="this.style.display='none'">
       <div class="slot-name">${c.name}</div>
       ${revHtml}
       <div class="slot-label">${pos.label}</div>
@@ -4333,7 +4351,7 @@ function renderHistory() {
   history.forEach(function(record) {
     var cardsHtml = '';
     record.cards.forEach(function(card) {
-      cardsHtml += '<div class="history-item-card"><img src="' + card.img + '" alt="' + card.name + '"></div>';
+      cardsHtml += '<div class="history-item-card"><img src="' + card.img + '" alt="' + card.name + '" loading="lazy" decoding="async"></div>';
     });
     html += '<div class="history-item" onclick="viewHistoryRecord(' + record.id + ')">';
     html += '<div class="history-item-header">';
@@ -4517,7 +4535,7 @@ function renderSearchCards(cards) {
       reversed: c.reversed || ''
     }));
     html += '<div class="search-card" onclick="openCardDetail(\'' + cardData + '\')">';
-    html += '<div class="search-card-img"><img src="' + c.img + '" alt="' + c.name + '" onerror="this.parentElement.style.display=\'none\'"></div>';
+    html += '<div class="search-card-img"><img src="' + c.img + '" alt="' + c.name + '" loading="lazy" decoding="async" onerror="this.parentElement.style.display=\'none\'"></div>';
     html += '<div class="search-card-info">';
     html += '<div class="search-card-name">' + escapeHtml(c.name) + '</div>';
     html += '<div class="search-card-meaning">' + escapeHtml(c.meaning) + '</div>';
@@ -4606,7 +4624,7 @@ function onSearchInput() {
       reversed: c.reversed || ''
     }));
     html += '<div class="search-card" onclick="openCardDetail(\'' + cardData + '\')">';
-    html += '<div class="search-card-img"><img src="' + c.img + '" alt="' + c.name + '" onerror="this.parentElement.style.display=\'none\'"></div>';
+    html += '<div class="search-card-img"><img src="' + c.img + '" alt="' + c.name + '" loading="lazy" decoding="async" onerror="this.parentElement.style.display=\'none\'"></div>';
     html += '<div class="search-card-info">';
     html += '<div class="search-card-name">' + nameHtml + '</div>';
     html += '<div class="search-card-meaning">' + meaningHtml + '</div>';
@@ -5298,7 +5316,7 @@ function goToReading() {
     var imgRotate = c.isReversed ? 'transform:rotate(180deg);' : '';
     var orienHtml = isLenormand ? '' : '<div class="reading-spread-orien">' + (c.isReversed ? '逆位' : '正位') + '</div>';
     slot.innerHTML =
-      '<img src="' + c.img + '" alt="' + c.name + '" style="' + imgRotate + '" onerror="this.style.display=\'none\'">' +
+      '<img src="' + c.img + '" alt="' + c.name + '" loading="lazy" decoding="async" style="' + imgRotate + '" onerror="this.style.display=\'none\'">' +
       '<div class="reading-spread-name">' + c.name + '</div>' +
       '<div class="reading-spread-pos">' + pos.label + '</div>' +
       orienHtml;
@@ -5478,7 +5496,7 @@ function viewHistoryRecord(id) {
     var imgRotate = card.isReversed ? 'transform:rotate(180deg);' : '';
     var orienHtml = isLenormand ? '' : '<div class="reading-spread-orien">' + (card.isReversed ? '逆位' : '正位') + '</div>';
     slot.innerHTML =
-      '<img src="' + card.img + '" alt="' + card.name + '" style="' + imgRotate + '" onerror="this.style.display=\'none\'">' +
+      '<img src="' + card.img + '" alt="' + card.name + '" loading="lazy" decoding="async" style="' + imgRotate + '" onerror="this.style.display=\'none\'">' +
       '<div class="reading-spread-name">' + card.name + '</div>' +
       '<div class="reading-spread-pos">' + pos.label + '</div>' +
       orienHtml;

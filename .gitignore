@@ -9,3 +9,8 @@
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# 旧格式图片（已全部转为 WebP，本地保留作备份，不再提交）
+图片素材/**/*.jpg
+图片素材/**/*.jpeg
+图片素材/雷诺曼素材/*.png
