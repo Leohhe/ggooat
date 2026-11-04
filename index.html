@@ -2395,6 +2395,28 @@ body{
 body.night .login-box{background:linear-gradient(165deg,#1a1330 0%,#150f26 100%);border-color:rgba(255,255,255,0.08)}
 body.night .login-input{background:rgba(255,255,255,0.06);border-color:rgba(167,139,255,0.25);color:#e8e2ff}
 body.night .login-btn{background:rgba(255,255,255,0.06);color:#c9b8ff;border-color:rgba(167,139,255,0.3)}
+/* ========== 登录页签与验证码 ========== */
+.login-tabs{
+  display:flex;margin-top:14px;
+  background:rgba(124,93,250,0.06);border-radius:12px;padding:3px;gap:3px;
+}
+.login-tab{
+  flex:1;text-align:center;padding:8px 0;font-size:11.5px;font-weight:700;
+  color:var(--text-muted);border-radius:9px;cursor:pointer;letter-spacing:0.05em;
+  transition:all 0.2s;
+}
+.login-tab.active{
+  background:#fff;color:var(--divine-purple);
+  box-shadow:0 2px 8px rgba(124,93,250,0.15);
+}
+body.night .login-tab.active{background:rgba(124,93,250,0.28);color:#d6c6ff}
+.login-field-code{display:flex;align-items:stretch;padding:0}
+.login-field-code .login-input{margin:0}
+.email-code-btn{
+  width:auto;flex:none;padding:0 13px;font-size:11px;margin:0;
+  border-radius:0 12px 12px 0 !important;white-space:nowrap;
+}
+.email-code-btn:disabled{opacity:0.55;pointer-events:none}
 /* ========== 通用居中弹窗盒（API设置/兑换码/改名） ========== */
 .popup-box{
   width:100%;max-width:320px;
@@ -3289,18 +3311,40 @@ body.night .scene-label{color:var(--text-muted)}
       <div class="login-title" id="loginTitle">登录 GgooAt</div>
       <div class="login-sub">登录后可占卜 · 次数与记录云端同步</div>
 
-      <div class="login-field">
-        <input type="text" id="authUser" class="login-input" placeholder="用户名或邮箱" maxlength="48" autocomplete="username">
-      </div>
-      <div class="login-field">
-        <input type="password" id="authPass" class="login-input" placeholder="密码（6-32位）" maxlength="32" autocomplete="current-password"
-               onkeydown="if(event.key==='Enter') doLogin()">
+      <div class="login-tabs">
+        <div class="login-tab active" id="tabPass" onclick="switchLoginTab('pass')">密码登录</div>
+        <div class="login-tab" id="tabEmail" onclick="switchLoginTab('email')">邮箱验证码</div>
       </div>
 
-      <div class="login-btns">
-        <button class="login-btn primary" id="authSubmit" onclick="doLogin()">登录</button>
-        <button class="login-btn" onclick="doRegister()">注册</button>
+      <div id="panePass">
+        <div class="login-field">
+          <input type="text" id="authUser" class="login-input" placeholder="用户名或邮箱" maxlength="48" autocomplete="username">
+        </div>
+        <div class="login-field">
+          <input type="password" id="authPass" class="login-input" placeholder="密码（6-32位）" maxlength="32" autocomplete="current-password"
+                 onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <div class="login-btns">
+          <button class="login-btn primary" id="authSubmit" onclick="doLogin()">登录</button>
+          <button class="login-btn" onclick="doRegister()">注册</button>
+        </div>
       </div>
+
+      <div id="paneEmail" style="display:none">
+        <div class="login-field">
+          <input type="email" id="emailLoginUser" class="login-input" placeholder="邮箱地址" maxlength="48" autocomplete="email">
+        </div>
+        <div class="login-field login-field-code">
+          <input type="text" id="emailLoginCode" class="login-input" placeholder="6位验证码" maxlength="8" inputmode="numeric"
+                 style="flex:1;border-radius:12px 0 0 12px;border-right:none" onkeydown="if(event.key==='Enter') doEmailLogin()">
+          <button class="login-btn email-code-btn" id="emailCodeBtn" onclick="sendEmailCode()">获取验证码</button>
+        </div>
+        <div class="login-btns">
+          <button class="login-btn primary" id="emailSubmit" onclick="doEmailLogin()">登录 / 注册</button>
+        </div>
+        <div class="account-hint" style="text-align:center">未注册的邮箱将自动创建账号</div>
+      </div>
+
       <div class="login-tip" onclick="closeLoginModal()">稍后再说</div>
     </div>
   </div>
@@ -5157,6 +5201,102 @@ function doLogin() {
       showToast((res && res.msg) || '登录失败');
     }
   }).catch(function () { btn.disabled = false; btn.textContent = '登录'; showToast('网络异常，请稍后重试'); });
+}
+
+/* ===== 邮箱验证码登录（Supabase OTP） ===== */
+var SUPABASE_URL = 'https://ayphnsufnrdytdtnyabg.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_5t9ClVJ77GBDAXjJobcHcw_gsPl2Fxp';
+var emailCodeTimer = null;
+
+function switchLoginTab(t) {
+  var tp = document.getElementById('panePass'), te = document.getElementById('paneEmail');
+  var tabP = document.getElementById('tabPass'), tabE = document.getElementById('tabEmail');
+  if (!tp || !te) return;
+  if (t === 'email') {
+    tp.style.display = 'none'; te.style.display = '';
+    tabE.classList.add('active'); tabP.classList.remove('active');
+    setTimeout(function () { var el = document.getElementById('emailLoginUser'); if (el) el.focus(); }, 100);
+  } else {
+    tp.style.display = ''; te.style.display = 'none';
+    tabP.classList.add('active'); tabE.classList.remove('active');
+  }
+}
+
+function sendEmailCode() {
+  var email = (document.getElementById('emailLoginUser').value || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showToast('请输入正确的邮箱地址'); return; }
+  var btn = document.getElementById('emailCodeBtn');
+  btn.disabled = true; btn.textContent = '发送中…';
+  fetch(SUPABASE_URL + '/auth/v1/otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+    body: JSON.stringify({ email: email, create_user: true })
+  }).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d }; });
+  }).then(function (res) {
+    if (res.ok) {
+      showToast('验证码已发送，请查收邮箱（注意垃圾箱）');
+      var left = 60;
+      btn.textContent = left + 's';
+      if (emailCodeTimer) clearInterval(emailCodeTimer);
+      emailCodeTimer = setInterval(function () {
+        left--;
+        if (left <= 0) { clearInterval(emailCodeTimer); btn.disabled = false; btn.textContent = '重新发送'; }
+        else btn.textContent = left + 's';
+      }, 1000);
+    } else {
+      btn.disabled = false; btn.textContent = '获取验证码';
+      var msg = (res.d && (res.d.msg || res.d.error_description || res.d.message)) || '';
+      if (msg.indexOf('rate') !== -1 || msg.indexOf('Too') !== -1 || msg.indexOf('限') !== -1) showToast('发送太频繁，请稍后再试');
+      else showToast(msg ? ('发送失败：' + msg) : '发送失败，请稍后重试');
+    }
+  }).catch(function () { btn.disabled = false; btn.textContent = '获取验证码'; showToast('网络异常，请稍后重试'); });
+}
+
+function doEmailLogin() {
+  var email = (document.getElementById('emailLoginUser').value || '').trim();
+  var code = (document.getElementById('emailLoginCode').value || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showToast('请输入正确的邮箱地址'); return; }
+  if (!code) { showToast('请输入邮箱收到的验证码'); return; }
+  var btn = document.getElementById('emailSubmit');
+  btn.disabled = true; btn.textContent = '验证中…';
+  // 依次尝试 OTP / 魔法链接 / 注册 三种票据类型，兼容 Supabase 不同模板
+  var types = ['email', 'magiclink', 'signup'];
+  function tryVerify(i) {
+    if (i >= types.length) {
+      btn.disabled = false; btn.textContent = '登录 / 注册';
+      showToast('验证码错误或已过期，请重新获取');
+      return;
+    }
+    fetch(SUPABASE_URL + '/auth/v1/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ type: types[i], email: email, token: code })
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d }; });
+    }).then(function (res) {
+      if (res.ok && res.d && res.d.access_token) {
+        return apiFetch('/api/auth/email-login', { access_token: res.d.access_token }).then(function (backend) {
+          btn.disabled = false; btn.textContent = '登录 / 注册';
+          if (backend && backend.ok) {
+            try { localStorage.setItem(AUTH_TOKEN_KEY, backend.token); } catch (e) { /* 忽略 */ }
+            saveAuthUser(backend.profile);
+            setCredits(backend.profile.credits);
+            applyProfileToUI();
+            closeLoginModal();
+            showToast(backend.msg || '登录成功');
+          } else {
+            showToast((backend && backend.msg) || '登录失败，请稍后重试');
+          }
+        });
+      }
+      tryVerify(i + 1);
+    }).catch(function () {
+      btn.disabled = false; btn.textContent = '登录 / 注册';
+      showToast('网络异常，请稍后重试');
+    });
+  }
+  tryVerify(0);
 }
 
 function doLogout() {
