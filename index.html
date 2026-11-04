@@ -3128,76 +3128,6 @@ body.night .scene-label{color:var(--text-muted)}
     </div>
   </div>
 
-  <!-- ========== API 设置弹窗（从抽屉打开） ========== -->
-  <div class="login-mask" id="apiModal" onclick="if(event.target===this) closeApiModal()">
-    <div class="popup-box">
-      <div class="popup-title">API 设置</div>
-      <div class="popup-sub">支持 OpenAI 兼容接口 · 保存在本机</div>
-
-    <div class="settings-section">
-      <div class="settings-label">
-        <span class="label-icon">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="6" cy="5" r="2"/><circle cx="10" cy="11" r="2"/>
-            <path d="M7.5 6L9 10"/><path d="M4 5.5L2 8l3 4"/>
-          </svg>
-        </span>
-        API 地址
-      </div>
-      <input type="text" class="settings-input" id="apiUrl" placeholder="https://api.openai.com/v1" value="">
-    </div>
-    
-    <div class="settings-section">
-      <div class="settings-label">
-        <span class="label-icon">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 5.5a4 4 0 0 0-8 0c0 3 4 5 4 5s4-2 4-5Z"/><circle cx="8" cy="5.5" r="1.5"/>
-          </svg>
-        </span>
-        API Key
-      </div>
-      <div class="settings-row">
-        <input type="password" class="settings-input" id="apiKey" placeholder="sk-xxxxxxxxxxxxxxxx" value="" style="border-radius:12px 0 0 12px;">
-        <button class="settings-btn" onclick="toggleApiKeyVisibility()" title="显示/隐藏" style="display:flex;align-items:center;justify-content:center;">
-          <svg id="eyeIcon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z"/><circle cx="8" cy="8" r="2"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-    
-    <div class="settings-section">
-      <div class="settings-label">
-        <span class="label-icon">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="1" y="3" width="14" height="10" rx="2"/>
-            <line x1="5" y1="7" x2="5" y2="9"/><line x1="8" y1="6" x2="8" y2="10"/>
-            <line x1="11" y1="5" x2="11" y2="11"/>
-          </svg>
-        </span>
-        选择模型
-      </div>
-      <div class="settings-row">
-        <select class="settings-select" id="modelSelect" disabled>
-          <option value="">请先拉取模型列表</option>
-        </select>
-        <button class="settings-btn" onclick="fetchModels()" id="fetchModelsBtn">拉取模型</button>
-      </div>
-      <div class="settings-status" id="modelStatus"></div>
-    </div>
-    
-    <div class="settings-divider"></div>
-    <div class="settings-hint">
-      支持任何兼容 OpenAI API v1 格式的服务<br>
-      如 OpenAI、DeepSeek、智谱AI、通义千问等
-    </div>
-
-    <button class="settings-save-btn" onclick="saveSettings()"><span> 保存配置 ✦</span></button>
-    <div class="settings-status" id="saveStatus"></div>
-      <div class="login-tip" onclick="closeApiModal()">关闭</div>
-    </div>
-  </div>
-
   <!-- ========== 个人抽屉（点击主页设置按钮，从右侧弹出） ========== -->
   <div class="drawer-mask" id="drawerMask" onclick="if(event.target===this) closeDrawer()">
     <div class="side-drawer" id="sideDrawer">
@@ -3221,13 +3151,6 @@ body.night .scene-label{color:var(--text-muted)}
       </div>
 
       <div class="drawer-menu">
-        <div class="drawer-item" onclick="openApiModal()">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-          <span>API 设置</span>
-        </div>
         <div class="drawer-item" onclick="openRedeemModal()">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M12 2l2.4 4.86 5.36.78-3.88 3.78.92 5.34L12 14.24l-4.8 2.52.92-5.34-3.88-3.78 5.36-.78L12 2z"/>
@@ -3761,7 +3684,6 @@ function closeAllScreens() {
   }
   // 抽屉与弹窗
   closeDrawer();
-  closeApiModal();
   closeRedeemModal();
   closeRenameModal();
   // 历史
@@ -5026,220 +4948,40 @@ function openSettings() {
   openDrawer();
 }
 
-function loadSavedSettings() {
-  try {
-    var saved = localStorage.getItem('ggooat_api_config');
-    if (saved) {
-      var config = JSON.parse(saved);
-      document.getElementById('apiUrl').value = config.url || '';
-      document.getElementById('apiKey').value = config.key || '';
-      if (config.model) {
-        var select = document.getElementById('modelSelect');
-        // 如果模型不在下拉列表中，添加进去
-        var found = false;
-        for (var i = 0; i < select.options.length; i++) {
-          if (select.options[i].value === config.model) { found = true; break; }
-        }
-        if (!found) {
-          var opt = document.createElement('option');
-          opt.value = config.model;
-          opt.textContent = config.model;
-          select.appendChild(opt);
-        }
-        select.value = config.model;
-      }
-    }
-  } catch (e) { /* 忽略 */ }
-}
+// ===== 内置 AI 接口（用户无需配置，每次占卜消耗 1 次额度）=====
+var BUILTIN_API = {
+  url: 'https://speed19.toter.me/v1',
+  key: 'sk-oh6uCarlqnHGFgdB5ODjpEp66cX0rjhiydSY6TS0cEgOZC9x',
+  model: 'gemini-3-flash'
+};
 
-function toggleApiKeyVisibility() {
-  var input = document.getElementById('apiKey');
-  var eyeIcon = document.getElementById('eyeIcon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (eyeIcon) {
-      eyeIcon.innerHTML = '<line x1="1" y1="1" x2="15" y2="15"/><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z"/><circle cx="8" cy="8" r="2"/>';
-    }
-  } else {
-    input.type = 'password';
-    if (eyeIcon) {
-      eyeIcon.innerHTML = '<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z"/><circle cx="8" cy="8" r="2"/>';
-    }
-  }
-}
-
-async function fetchModels() {
-  var url = document.getElementById('apiUrl').value.trim();
-  var key = document.getElementById('apiKey').value.trim();
-  var statusEl = document.getElementById('modelStatus');
-  var select = document.getElementById('modelSelect');
-  var btn = document.getElementById('fetchModelsBtn');
-
-  if (!url) { statusEl.textContent = '请先输入API地址'; statusEl.className = 'settings-status error'; return; }
-  if (!key) { statusEl.textContent = '请先输入API Key'; statusEl.className = 'settings-status error'; return; }
-
-  statusEl.textContent = '正在拉取模型列表...';
-  statusEl.className = 'settings-status info';
-  btn.disabled = true;
-  btn.textContent = '加载中...';
-
-  try {
-    var apiUrl = url.replace(/\/+$/, '') + '/models';
-    var res = await fetch(apiUrl, {
-      headers: { 'Authorization': 'Bearer ' + key }
-    });
-
-    if (!res.ok) {
-      statusEl.textContent = '拉取失败 (HTTP ' + res.status + ')，请检查API地址和Key';
-      statusEl.className = 'settings-status error';
-      btn.disabled = false;
-      btn.textContent = '拉取模型';
-      return;
-    }
-
-    var data = await res.json();
-    var models = data.data || data;
-
-    select.innerHTML = '';
-    select.disabled = false;
-
-    var chatModels = [];
-    for (var i = 0; i < models.length; i++) {
-      var m = models[i];
-      var id = typeof m === 'string' ? m : (m.id || m.model || '');
-      if (!id) continue;
-      // 过滤掉embedding、moderation、whisper、tts、dall-e等非chat模型
-      var lowerId = id.toLowerCase();
-      if (lowerId.indexOf('embed') !== -1 || lowerId.indexOf('moderation') !== -1
-        || lowerId.indexOf('whisper') !== -1 || lowerId.indexOf('tts') !== -1
-        || lowerId.indexOf('dall') !== -1) continue;
-      chatModels.push(id);
-    }
-
-    // 排序：优先显示包含gpt、claude、deepseek、qwen、glm、gemini的模型
-    var priority = ['gpt', 'claude', 'deepseek', 'qwen', 'glm', 'gemini', 'chatgpt', 'o1', 'o3', 'grok'];
-    chatModels.sort(function(a, b) {
-      var aLower = a.toLowerCase();
-      var bLower = b.toLowerCase();
-      var aPri = -1, bPri = -1;
-      for (var j = 0; j < priority.length; j++) {
-        if (aPri === -1 && aLower.indexOf(priority[j]) !== -1) aPri = j;
-        if (bPri === -1 && bLower.indexOf(priority[j]) !== -1) bPri = j;
-      }
-      if (aPri !== -1 && bPri === -1) return -1;
-      if (aPri === -1 && bPri !== -1) return 1;
-      if (aPri !== -1 && bPri !== -1) return aPri - bPri;
-      return aLower.localeCompare(bLower);
-    });
-
-    if (chatModels.length === 0) {
-      select.innerHTML = '<option value="">未找到可用模型</option>';
-      statusEl.textContent = '未找到聊天模型，请检查API';
-      statusEl.className = 'settings-status error';
-    } else {
-      for (var k = 0; k < chatModels.length; k++) {
-        var opt = document.createElement('option');
-        opt.value = chatModels[k];
-        opt.textContent = chatModels[k];
-        select.appendChild(opt);
-      }
-      // 自动选择首选模型
-      var preferred = chatModels.find(function(m) {
-        var lm = m.toLowerCase();
-        return lm.indexOf('gpt-4o') !== -1 || lm.indexOf('gpt-4') !== -1 || lm.indexOf('claude') !== -1
-          || lm.indexOf('deepseek') !== -1 || lm.indexOf('gpt-3.5') !== -1;
-      });
-      if (preferred) select.value = preferred;
-
-      statusEl.textContent = '成功拉取 ' + chatModels.length + ' 个模型';
-      statusEl.className = 'settings-status success';
-    }
-  } catch (e) {
-    statusEl.textContent = '网络错误，请检查API地址';
-    statusEl.className = 'settings-status error';
-  }
-
-  btn.disabled = false;
-  btn.textContent = '拉取模型';
-}
-
-function saveSettings() {
-  var url = document.getElementById('apiUrl').value.trim();
-  var key = document.getElementById('apiKey').value.trim();
-  var model = document.getElementById('modelSelect').value;
-  var statusEl = document.getElementById('saveStatus');
-  var btn = document.querySelector('.settings-save-btn');
-
-  if (!url) {
-    statusEl.textContent = '请输入API地址';
-    statusEl.className = 'settings-status error';
-    if (btn) { btn.classList.add('error-flash'); setTimeout(function(){ btn.classList.remove('error-flash'); }, 500); }
-    return;
-  }
-  if (!key) {
-    statusEl.textContent = '请输入API Key';
-    statusEl.className = 'settings-status error';
-    if (btn) { btn.classList.add('error-flash'); setTimeout(function(){ btn.classList.remove('error-flash'); }, 500); }
-    return;
-  }
-  if (!model) {
-    statusEl.textContent = '请先拉取并选择模型';
-    statusEl.className = 'settings-status error';
-    if (btn) { btn.classList.add('error-flash'); setTimeout(function(){ btn.classList.remove('error-flash'); }, 500); }
-    return;
-  }
-
-  var config = { url: url, key: key, model: model };
-  localStorage.setItem('ggooat_api_config', JSON.stringify(config));
-
-  statusEl.textContent = '配置已保存成功！';
-  statusEl.className = 'settings-status success';
-
-  // 按钮反馈动画
-  if (btn) {
-    var btnSpan = btn.querySelector('span');
-    if (btnSpan) btnSpan.textContent = '✦ 已保存 ✦';
-    else btn.textContent = '✦ 已保存 ✦';
-    btn.classList.add('saved');
-    setTimeout(function() {
-      btn.classList.remove('saved');
-      if (btnSpan) btnSpan.textContent = '✦ 保存配置 ✦';
-      else btn.textContent = '✦ 保存配置 ✦';
-    }, 1500);
-  }
-
-  showToast('设置已保存');
-
-  setTimeout(function() {
-    statusEl.textContent = '';
-  }, 3000);
+function getApiConfig() {
+  return BUILTIN_API;
 }
 
 // ========== 今日运势功能 ==========
 function getDailyHoroscope() {
+  if (!requireLogin('请先登录后查看今日运势')) return;
+  var credits = getCredits();
+  if (credits <= 0) {
+    showToast('次数已用完，请前往个人中心输入兑换码兑换');
+    return;
+  }
+
   var overlay = document.getElementById('horoscopeOverlay');
   var content = document.getElementById('horoscopeContent');
   var dateEl = document.getElementById('horoscopeDate');
-  
+
   overlay.classList.add('open');
   content.innerHTML = '<div class="horoscope-loading"><span></span><span></span><span></span></div>';
-  
+
   var now = new Date();
   dateEl.textContent = now.getFullYear() + '.' + (now.getMonth() + 1).toString().padStart(2, '0') + '.' + now.getDate().toString().padStart(2, '0');
-  
-  var config = null;
-  try {
-    var saved = localStorage.getItem('ggooat_api_config');
-    if (saved) config = JSON.parse(saved);
-  } catch (e) { /* 忽略 */ }
-  
-  if (!config || !config.key || !config.url || !config.model) {
-    setTimeout(function() {
-      content.innerHTML = '<div class="horoscope-text" style="color:var(--text-muted);font-size:14px">请先在设置中配置API，才能获取今日运势</div>';
-    }, 500);
-    return;
-  }
-  
+
+  // 使用内置接口，每次查看消耗 1 次额度
+  var config = getApiConfig();
+  spendOneCredit(credits);
+
   var prompt = '你是一位神秘而温柔的占星师。请为用户生成一句简短、优美、富有诗意的今日运势短语。要求：\n1. 50字以内\n2. 语言温柔治愈，略带神秘感\n3. 不做具体预测，而是给予心灵指引\n4. 包含一个幸运色或幸运元素的暗示\n5. 语气温暖，充满希望';
   
   var url = config.url.replace(/\/+$/, '') + '/chat/completions';
@@ -5828,17 +5570,6 @@ function closeDrawer() {
   if (m) m.classList.remove('open');
 }
 
-function openApiModal() {
-  loadSavedSettings();
-  var m = document.getElementById('apiModal');
-  if (m) m.classList.add('open');
-}
-
-function closeApiModal() {
-  var m = document.getElementById('apiModal');
-  if (m) m.classList.remove('open');
-}
-
 function openRedeemModal() {
   renderCredits();
   var m = document.getElementById('redeemModal');
@@ -5939,18 +5670,8 @@ function goToReading() {
     return;
   }
 
-  var config = null;
-  try {
-    var saved = localStorage.getItem('ggooat_api_config');
-    if (saved) config = JSON.parse(saved);
-  } catch (e) { /* 忽略 */ }
-
-  if (!config || !config.key || !config.url || !config.model) {
-    showToast('检测到用户并未选择神灵');
-    return;
-  }
-
-  // 每次解读消耗 1 次（登录用户云端扣减）
+  // 使用内置接口，每次解读消耗 1 次（登录用户云端扣减）
+  var config = getApiConfig();
   spendOneCredit(credits);
 
   document.getElementById('readingScreen').classList.add('open');
@@ -6179,35 +5900,8 @@ function viewHistoryRecord(id) {
   readingScreen.classList.add('open');
 }
 
-// ========== 初始化设置加载 ==========
+// ========== 初始化 ==========
 (function initSettings() {
-  try {
-    var saved = localStorage.getItem('ggooat_api_config');
-    if (saved) {
-      var config = JSON.parse(saved);
-      var apiUrlEl = document.getElementById('apiUrl');
-      if (apiUrlEl && config.url) apiUrlEl.value = config.url;
-      var apiKeyEl = document.getElementById('apiKey');
-      if (apiKeyEl && config.key) apiKeyEl.value = config.key;
-      if (config.model) {
-        var select = document.getElementById('modelSelect');
-        if (select) {
-          var found = false;
-          for (var i = 0; i < select.options.length; i++) {
-            if (select.options[i].value === config.model) { found = true; break; }
-          }
-          if (!found) {
-            var opt = document.createElement('option');
-            opt.value = config.model;
-            opt.textContent = config.model;
-            select.appendChild(opt);
-          }
-          select.value = config.model;
-          select.disabled = false;
-        }
-      }
-    }
-  } catch (e) { /* 忽略 */ }
   initDOMCache();
   // 初始化昼夜模式（默认跟随上次选择）
   var savedTheme = 'day';
