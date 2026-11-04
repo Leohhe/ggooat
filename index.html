@@ -2318,6 +2318,83 @@ body{
 .account-hint,.account-status{
   font-size:10.5px;color:var(--text-muted);margin-top:9px;line-height:1.6;
 }
+/* ========== 未登录引导 ========== */
+.profile-login-hint{
+  width:100%;
+  background:rgba(255,255,255,0.9);
+  border:1.5px solid var(--glass-border);
+  border-radius:20px;
+  padding:26px 20px 22px;
+  box-shadow:0 8px 24px rgba(124,93,250,0.08);
+  margin-top:14px;
+  text-align:center;
+}
+.profile-login-hint .hint-star{
+  font-size:22px;color:var(--divine-purple);margin-bottom:8px;
+}
+.profile-login-hint .hint-line{
+  font-size:14px;font-weight:700;color:var(--text-dark);letter-spacing:0.04em;
+}
+.profile-login-hint .hint-sub{
+  font-size:10.5px;color:var(--text-muted);margin-top:6px;line-height:1.6;
+}
+/* ========== 登录弹窗 ========== */
+.login-mask{
+  position:absolute;inset:0;z-index:120;
+  background:rgba(24,16,48,0.55);
+  display:none;align-items:center;justify-content:center;
+  padding:0 26px;
+}
+.login-mask.open{display:flex}
+.login-box{
+  width:100%;max-width:320px;
+  background:linear-gradient(165deg,#ffffff 0%,#f8f4ff 100%);
+  border-radius:24px;padding:24px 22px 18px;
+  box-shadow:0 20px 50px rgba(40,20,90,0.28);
+  border:1.5px solid rgba(255,255,255,0.8);
+  animation:loginUp 0.3s var(--transition-bounce);
+}
+@keyframes loginUp{from{opacity:0;transform:translateY(14px) scale(0.97)}to{opacity:1;transform:none}}
+.login-title{
+  font-family:'Cinzel',serif;font-size:16px;font-weight:700;
+  color:var(--text-dark);text-align:center;letter-spacing:0.06em;
+}
+.login-sub{
+  font-size:10.5px;color:var(--text-muted);text-align:center;
+  margin:6px 0 16px;line-height:1.5;
+}
+.login-field{margin-bottom:10px}
+.login-input{
+  width:100%;height:42px;border-radius:12px;
+  border:1.5px solid rgba(124,93,250,0.22);
+  background:rgba(255,255,255,0.95);
+  padding:0 14px;font-size:13px;color:var(--text-dark);
+  outline:none;transition:border-color 0.25s,box-shadow 0.25s;
+}
+.login-input:focus{
+  border-color:var(--divine-purple);
+  box-shadow:0 0 0 3px rgba(124,93,250,0.12);
+}
+.login-btns{display:flex;gap:9px;margin-top:14px}
+.login-btn{
+  flex:1;height:40px;border-radius:12px;cursor:pointer;
+  font-size:13px;font-weight:600;
+  border:1.5px solid rgba(124,93,250,0.28);
+  background:rgba(255,255,255,0.9);color:var(--divine-purple);
+  transition:all 0.25s;
+}
+.login-btn.primary{
+  background:linear-gradient(135deg,#a98bff 0%,#7c5dfa 100%);
+  border:none;color:#fff;box-shadow:0 6px 16px rgba(124,93,250,0.3);
+}
+.login-btn:active{transform:scale(0.97)}
+.login-tip{
+  text-align:center;font-size:11px;color:var(--text-muted);
+  margin-top:14px;padding:6px;cursor:pointer;
+}
+body.night .login-box{background:linear-gradient(165deg,#1a1330 0%,#150f26 100%);border-color:rgba(255,255,255,0.08)}
+body.night .login-input{background:rgba(255,255,255,0.06);border-color:rgba(167,139,255,0.25);color:#e8e2ff}
+body.night .login-btn{background:rgba(255,255,255,0.06);color:#c9b8ff;border-color:rgba(167,139,255,0.3)}
 /* ========== 兑换码管理后台 ========== */
 .admin-screen{
   position:absolute;inset:0;border-radius:48px;
@@ -3048,29 +3125,37 @@ body.night .scene-label{color:var(--text-muted)}
   <div class="profile-screen" id="profileScreen">
     <div class="profile-header">
       <div class="profile-avatar-wrap">
-        <div class="profile-avatar" id="profileAvatar" onclick="uploadAvatar()">
+        <div class="profile-avatar" id="profileAvatar" onclick="onAvatarClick()">
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--divine-purple)" stroke-width="1.5">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
             <circle cx="12" cy="7" r="4"/>
           </svg>
         </div>
-        <div class="profile-avatar-edit" onclick="uploadAvatar()">
+        <div class="profile-avatar-edit" onclick="onAvatarClick()">
           <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 20h9"/>
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
         </div>
       </div>
-      <div class="profile-nickname" onclick="focusNickname()">
-        <input type="text" id="profileNickname" class="profile-nickname-input" value="神秘旅者" onblur="saveNickname()" onkeydown="if(event.key==='Enter') this.blur()">
+      <div class="profile-nickname" onclick="onNicknameClick()">
+        <input type="text" id="profileNickname" class="profile-nickname-input" value="请登录" readonly onblur="saveNickname()" onkeydown="if(event.key==='Enter') this.blur()">
         <svg viewBox="0 0 24 24" class="profile-nickname-edit" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
         </svg>
       </div>
     </div>
-    
-    <div class="profile-credit-card">
+
+    <!-- 未登录引导 -->
+    <div class="profile-login-hint" id="profileLoginHint" style="display:none">
+      <div class="hint-star">✦</div>
+      <div class="hint-line">登录后即可开始占卜</div>
+      <div class="hint-sub">次数与占卜记录云端同步，换设备不丢失</div>
+      <button class="account-btn primary" style="max-width:200px;margin:14px auto 0;display:block" onclick="openLoginModal()">点此登录 / 注册</button>
+    </div>
+
+    <div class="profile-credit-card" id="creditCard">
       <div class="profile-credit-top">
         <div class="profile-credit-label">剩余次数</div>
         <div class="profile-credit-value" id="creditCount">5</div>
@@ -3081,32 +3166,13 @@ body.night .scene-label{color:var(--text-muted)}
       </div>
     </div>
 
-    <!-- 账号（登录后次数与记录跨设备同步） -->
-    <div class="account-card">
-      <!-- 未登录 -->
-      <div id="accountLogin">
-        <div class="account-title">账号</div>
-        <div class="account-row">
-          <input type="text" id="authUser" class="redeem-input" placeholder="账号（2-16位）" maxlength="16">
-        </div>
-        <div class="account-row">
-          <input type="password" id="authPass" class="redeem-input" placeholder="密码（6-32位）" maxlength="32"
-                 onkeydown="if(event.key==='Enter') doLogin()">
-        </div>
-        <div class="account-btns">
-          <button class="account-btn primary" id="authSubmit" onclick="doLogin()">登录</button>
-          <button class="account-btn" onclick="doRegister()">注册并登录</button>
-        </div>
-        <div class="account-hint">登录后：剩余次数、昵称头像、占卜记录云端的同步，换手机也不丢</div>
-      </div>
-      <!-- 已登录 -->
-      <div id="accountLogged" style="display:none">
-        <div class="account-title">已登录：<span id="accountName"></span></div>
-        <div class="account-status" id="accountSync"></div>
-        <div class="account-btns">
-          <button class="account-btn" onclick="syncProfileToCloud(); showToast('已同步到云端')">立即同步</button>
-          <button class="account-btn danger" onclick="doLogout()">退出登录</button>
-        </div>
+    <!-- 账号状态（登录后显示） -->
+    <div class="account-card" id="accountCard" style="display:none">
+      <div class="account-title">已登录：<span id="accountName">—</span></div>
+      <div class="account-status" id="accountSync"></div>
+      <div class="account-btns">
+        <button class="account-btn" onclick="syncProfileToCloud(); showToast('已同步到云端')">立即同步</button>
+        <button class="account-btn danger" onclick="doLogout()">退出登录</button>
       </div>
     </div>
 
@@ -3191,6 +3257,28 @@ body.night .scene-label{color:var(--text-muted)}
   <div class="focus-overlay" id="focusOverlay" onclick="cancelFocus(event)">
     <div class="reveal-btn-wrap" id="revealBtnWrap">
       <button class="reveal-btn" onclick="revealFocusedCard()">✦ 翻 牌 ✦</button>
+    </div>
+  </div>
+
+  <!-- ========== 登录/注册弹窗（点头像打开） ========== -->
+  <div class="login-mask" id="loginModal" onclick="if(event.target===this) closeLoginModal()">
+    <div class="login-box">
+      <div class="login-title" id="loginTitle">登录 GgooAt</div>
+      <div class="login-sub">登录后可占卜 · 次数与记录云端同步</div>
+
+      <div class="login-field">
+        <input type="text" id="authUser" class="login-input" placeholder="账号（2-16位）" maxlength="16" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <input type="password" id="authPass" class="login-input" placeholder="密码（6-32位）" maxlength="32" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+
+      <div class="login-btns">
+        <button class="login-btn primary" id="authSubmit" onclick="doLogin()">登录</button>
+        <button class="login-btn" onclick="doRegister()">注册</button>
+      </div>
+      <div class="login-tip" onclick="closeLoginModal()">稍后再说</div>
     </div>
   </div>
 </div>
@@ -3604,6 +3692,7 @@ function closeAllScreens() {
 }
 
 function openDivination() {
+  if (!requireLogin('请先登录后再开始占卜')) return;
   currentDivinationMode = 'tarot';
   closeAllScreens();
   currentStep = 1;
@@ -3621,6 +3710,7 @@ function openLenormand() {
     showToast('开发者已关闭《雷诺曼》使用权限，敬请期待！');
     return;
   }
+  if (!requireLogin('请先登录后再开始占卜')) return;
   currentDivinationMode = 'lenormand';
   closeAllScreens();
   currentStep = 1;
@@ -5201,6 +5291,7 @@ function doRegister() {
       saveAuthUser(res.profile);
       setCredits(res.profile.credits);
       applyProfileToUI();
+      closeLoginModal();
       document.getElementById('authPass').value = '';
       showToast('注册成功！欢迎 ' + res.profile.username);
     } else {
@@ -5222,6 +5313,7 @@ function doLogin() {
       saveAuthUser(res.profile);
       setCredits(res.profile.credits);
       applyProfileToUI();
+      closeLoginModal();
       document.getElementById('authPass').value = '';
       showToast('欢迎回来，' + res.profile.username);
     } else {
@@ -5271,19 +5363,61 @@ function restoreSession() {
 }
 
 function renderAccount() {
-  var loggedBox = document.getElementById('accountLogged');
-  var loginBox = document.getElementById('accountLogin');
-  if (!loggedBox || !loginBox) return;
+  var card = document.getElementById('accountCard');
+  var nick = document.getElementById('profileNickname');
+  var creditCard = document.getElementById('creditCard');
+  var hint = document.getElementById('profileLoginHint');
+  if (!card || !nick) return;
   if (authUser) {
-    loggedBox.style.display = '';
-    loginBox.style.display = 'none';
+    card.style.display = '';
+    if (creditCard) creditCard.style.display = '';
+    if (hint) hint.style.display = 'none';
     document.getElementById('accountName').textContent = authUser.username;
     document.getElementById('accountSync').textContent = '云端次数：' + authUser.credits + ' · 云端记录：' +
       (Array.isArray(authUser.history) ? authUser.history.length : 0) + ' 条';
+    nick.readOnly = false;
+    nick.value = authUser.nickname || getUserProfile().nickname || authUser.username;
   } else {
-    loggedBox.style.display = 'none';
-    loginBox.style.display = '';
+    card.style.display = 'none';
+    if (creditCard) creditCard.style.display = 'none';   // 未登录不显示次数（也无法占卜）
+    if (hint) hint.style.display = '';
+    nick.readOnly = true;
+    nick.value = '请登录';
   }
+}
+
+/* ===== 登录弹窗 ===== */
+function openLoginModal() {
+  var m = document.getElementById('loginModal');
+  if (!m) return;
+  m.classList.add('open');
+  setTimeout(function () {
+    var u = document.getElementById('authUser');
+    if (u) u.focus();
+  }, 260);
+}
+
+function closeLoginModal() {
+  var m = document.getElementById('loginModal');
+  if (m) m.classList.remove('open');
+}
+
+// 需要登录的操作：未登录则弹登录框并返回 false
+function requireLogin(msg) {
+  if (authUser && getAuthToken()) return true;
+  if (msg) showToast(msg);
+  openLoginModal();
+  return false;
+}
+
+function onAvatarClick() {
+  if (authUser) uploadAvatar();     // 已登录：换头像
+  else openLoginModal();            // 未登录：打开登录
+}
+
+function onNicknameClick() {
+  if (!requireLogin('请先登录')) return;
+  focusNickname();
 }
 
 // 登录用户消耗 1 次（先本地扣，再云端校正）
@@ -5297,6 +5431,7 @@ function spendOneCredit(current) {
 }
 
 function redeemCode() {
+  if (!requireLogin('请先登录后再兑换')) return;
   var input = document.getElementById('redeemInput');
   if (!input) return;
   var code = (input.value || '').trim().toUpperCase();
@@ -5608,8 +5743,7 @@ function openProfile() {
 function renderProfile() {
   var profile = getUserProfile();
 
-  var nicknameInput = document.getElementById('profileNickname');
-  nicknameInput.value = profile.nickname;
+  renderAccount();
   renderCredits();
 
   var avatarEl = document.getElementById('profileAvatar');
@@ -5623,11 +5757,13 @@ function renderProfile() {
 
 function focusNickname() {
   var input = document.getElementById('profileNickname');
+  if (input.readOnly) return;
   input.focus();
   input.select();
 }
 
 function saveNickname() {
+  if (!authUser) return;
   var input = document.getElementById('profileNickname');
   var newName = input.value.trim();
   var profile = getUserProfile();
@@ -5671,6 +5807,7 @@ function uploadAvatar() {
 
 // ========== 进入解读界面 ==========
 function goToReading() {
+  if (!requireLogin('请先登录后再开始占卜')) return;
   var credits = getCredits();
   if (credits <= 0) {
     showToast('次数已用完，请前往个人中心输入兑换码兑换');
