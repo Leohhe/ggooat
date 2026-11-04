@@ -3326,23 +3326,43 @@ body.night .scene-label{color:var(--text-muted)}
         </div>
         <div class="login-btns">
           <button class="login-btn primary" id="authSubmit" onclick="doLogin()">登录</button>
-          <button class="login-btn" onclick="doRegister()">注册</button>
         </div>
+        <div class="account-hint" style="text-align:center">还没有账号？切换「邮箱验证码」注册</div>
       </div>
 
       <div id="paneEmail" style="display:none">
-        <div class="login-field">
-          <input type="email" id="emailLoginUser" class="login-input" placeholder="邮箱地址" maxlength="48" autocomplete="email">
+        <div id="emailStep1">
+          <div class="login-field">
+            <input type="email" id="emailLoginUser" class="login-input" placeholder="邮箱地址（QQ/163/Gmail 均可）" maxlength="48" autocomplete="email">
+          </div>
+          <div class="login-field login-field-code">
+            <input type="text" id="emailLoginCode" class="login-input" placeholder="8位验证码" maxlength="8" inputmode="numeric"
+                   style="flex:1;border-radius:12px 0 0 12px;border-right:none" onkeydown="if(event.key==='Enter') doEmailLogin()">
+            <button class="login-btn email-code-btn" id="emailCodeBtn" onclick="sendEmailCode()">获取验证码</button>
+          </div>
+          <div class="login-btns">
+            <button class="login-btn primary" id="emailSubmit" onclick="doEmailLogin()">下一步</button>
+          </div>
+          <div class="account-hint" style="text-align:center">验证邮箱后设置用户名和密码完成注册</div>
         </div>
-        <div class="login-field login-field-code">
-          <input type="text" id="emailLoginCode" class="login-input" placeholder="输入邮件中的验证码" maxlength="10" inputmode="numeric"
-                 style="flex:1;border-radius:12px 0 0 12px;border-right:none" onkeydown="if(event.key==='Enter') doEmailLogin()">
-          <button class="login-btn email-code-btn" id="emailCodeBtn" onclick="sendEmailCode()">获取验证码</button>
+        <div id="emailStep2" style="display:none">
+          <div class="account-hint" style="text-align:center;margin-bottom:10px">
+            邮箱验证成功：<b id="regEmailShow"></b>　<span style="color:var(--divine-purple);cursor:pointer;text-decoration:underline" onclick="regBack()">重新验证</span>
+          </div>
+          <div class="login-field">
+            <input type="text" id="regUsername" class="login-input" placeholder="用户名（2-16位，不可重复）" maxlength="16">
+          </div>
+          <div class="login-field">
+            <input type="password" id="regPass1" class="login-input" placeholder="密码（6-32位）" maxlength="32">
+          </div>
+          <div class="login-field">
+            <input type="password" id="regPass2" class="login-input" placeholder="确认密码" maxlength="32"
+                   onkeydown="if(event.key==='Enter') doEmailRegister()">
+          </div>
+          <div class="login-btns">
+            <button class="login-btn primary" id="regSubmit" onclick="doEmailRegister()">完成注册</button>
+          </div>
         </div>
-        <div class="login-btns">
-          <button class="login-btn primary" id="emailSubmit" onclick="doEmailLogin()">登录 / 注册</button>
-        </div>
-        <div class="account-hint" style="text-align:center">未注册的邮箱将自动创建账号</div>
       </div>
 
       <div class="login-tip" onclick="closeLoginModal()">稍后再说</div>
@@ -5277,7 +5297,7 @@ function doEmailLogin() {
     }).then(function (res) {
       if (res.ok && res.d && res.d.access_token) {
         return apiFetch('/api/auth/email-login', { access_token: res.d.access_token }).then(function (backend) {
-          btn.disabled = false; btn.textContent = '登录 / 注册';
+          btn.disabled = false; btn.textContent = '下一步';
           if (backend && backend.ok) {
             try { localStorage.setItem(AUTH_TOKEN_KEY, backend.token); } catch (e) { /* 忽略 */ }
             saveAuthUser(backend.profile);
@@ -5285,6 +5305,15 @@ function doEmailLogin() {
             applyProfileToUI();
             closeLoginModal();
             showToast(backend.msg || '登录成功');
+          } else if (backend && backend.pending) {
+            // 新邮箱：进入设置用户名/密码步骤
+            window._pendingReg = backend.pending_token;
+            var es = document.getElementById('regEmailShow');
+            if (es) es.textContent = backend.email;
+            document.getElementById('emailStep1').style.display = 'none';
+            document.getElementById('emailStep2').style.display = '';
+            showToast('邮箱验证成功，请设置用户名和密码');
+            setTimeout(function () { var el = document.getElementById('regUsername'); if (el) el.focus(); }, 100);
           } else {
             showToast((backend && backend.msg) || '登录失败，请稍后重试');
           }
@@ -5297,6 +5326,39 @@ function doEmailLogin() {
     });
   }
   tryVerify(0);
+}
+
+function regBack() {
+  window._pendingReg = null;
+  var s2 = document.getElementById('emailStep2'), s1 = document.getElementById('emailStep1');
+  if (s2) s2.style.display = 'none';
+  if (s1) s1.style.display = '';
+}
+
+function doEmailRegister() {
+  if (!window._pendingReg) { showToast('请先完成邮箱验证'); return; }
+  var un = (document.getElementById('regUsername').value || '').trim();
+  var p1 = document.getElementById('regPass1').value;
+  var p2 = document.getElementById('regPass2').value;
+  if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]{2,16}$/.test(un)) { showToast('用户名需 2-16 位，中英文/数字/下划线'); return; }
+  if (p1.length < 6 || p1.length > 32) { showToast('密码需 6-32 位'); return; }
+  if (p1 !== p2) { showToast('两次输入的密码不一致'); return; }
+  var btn = document.getElementById('regSubmit');
+  btn.disabled = true; btn.textContent = '注册中…';
+  apiFetch('/api/auth/email-register', { pending_token: window._pendingReg, username: un, password: p1 }).then(function (res) {
+    btn.disabled = false; btn.textContent = '完成注册';
+    if (res && res.ok) {
+      window._pendingReg = null;
+      try { localStorage.setItem(AUTH_TOKEN_KEY, res.token); } catch (e) { /* 忽略 */ }
+      saveAuthUser(res.profile);
+      setCredits(res.profile.credits);
+      applyProfileToUI();
+      closeLoginModal();
+      showToast(res.msg || '注册成功');
+    } else {
+      showToast((res && res.msg) || '注册失败');
+    }
+  }).catch(function () { btn.disabled = false; btn.textContent = '完成注册'; showToast('网络异常，请稍后重试'); });
 }
 
 function doLogout() {
