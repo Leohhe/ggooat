@@ -3290,7 +3290,7 @@ body.night .scene-label{color:var(--text-muted)}
       <div class="login-sub">登录后可占卜 · 次数与记录云端同步</div>
 
       <div class="login-field">
-        <input type="text" id="authUser" class="login-input" placeholder="账号（2-16位）" maxlength="16" autocomplete="username">
+        <input type="text" id="authUser" class="login-input" placeholder="用户名或邮箱" maxlength="48" autocomplete="username">
       </div>
       <div class="login-field">
         <input type="password" id="authPass" class="login-input" placeholder="密码（6-32位）" maxlength="32" autocomplete="current-password"
@@ -4998,18 +4998,24 @@ function getDailyHoroscope() {
     })
   }).then(function(res) {
     if (!res.ok) {
-      content.innerHTML = '<div class="horoscope-text" style="color:#e74c3c;font-size:14px">获取运势失败，请稍后重试</div>';
+      content.innerHTML = '<div class="horoscope-text" style="color:#e74c3c;font-size:14px">获取运势失败 (HTTP ' + res.status + ')，请稍后重试</div>';
       return;
     }
-    return res.json();
+    // 兼容带 UTF-8 BOM 的返回（部分中转接口会有）
+    return res.text().then(function(t) {
+      try { return JSON.parse(String(t).replace(/^\uFEFF/, '').trim()); }
+      catch (e) { return null; }
+    });
   }).then(function(data) {
-    if (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-      content.innerHTML = '<div class="horoscope-text">' + data.choices[0].message.content.trim() + '</div>';
+    var ch = data && data.choices && data.choices[0];
+    var txt = ch && ((ch.message && ch.message.content) || (ch.delta && ch.delta.content));
+    if (txt && String(txt).trim()) {
+      content.innerHTML = '<div class="horoscope-text">' + String(txt).trim() + '</div>';
     } else {
-      content.innerHTML = '<div class="horoscope-text" style="color:var(--text-muted);font-size:14px">今日星辰沉默，请明日再来</div>';
+      content.innerHTML = '<div class="horoscope-text" style="color:var(--text-muted);font-size:14px">今日星辰沉默，请稍后再试</div>';
     }
   }).catch(function(e) {
-    content.innerHTML = '<div class="horoscope-text" style="color:#e74c3c;font-size:14px">网络连接异常</div>';
+    content.innerHTML = '<div class="horoscope-text" style="color:#e74c3c;font-size:14px">网络连接异常，请稍后重试</div>';
   });
 }
 
@@ -5760,63 +5766,74 @@ function goToReading() {
     const decoder = new TextDecoder();
     var buffer = '';
     var fullReading = '';
+    var rawAll = '';   // 保留原始响应，流式失败时兜底解析
+    function finishReading() {
+      // 兜底1：流式没吐出内容，尝试把整体响应当普通 JSON 解析
+      if (!fullReading) {
+        try {
+          var whole = JSON.parse(String(rawAll).replace(/^\uFEFF/, '').trim());
+          var ch = whole && whole.choices && whole.choices[0];
+          var once = ch && ((ch.message && ch.message.content) || (ch.delta && ch.delta.content));
+          if (once) { textDiv.innerText = String(once); fullReading = String(once); }
+        } catch (e) { /* 忽略 */ }
+      }
+      // 兜底2：确实什么都没有，给出明确错误
+      if (!fullReading) {
+        textDiv.innerText = '解读内容为空，可能是网络波动，请返回重新占卜（次数会在云端校正后返还）。';
+      }
+      currentReadingData = {
+        question: question,
+        spreadType: selectedSpreadType,
+        mode: currentDivinationMode,
+        cards: selectedCards.map(function(c) {
+          return {
+            name: c.name,
+            img: c.img,
+            isReversed: c.isReversed,
+            meaning: c.meaning,
+            upright: c.upright,
+            reversed: c.reversed
+          };
+        }),
+        reading: fullReading
+      };
+    }
     function readStream() {
       reader.read().then(function(result) {
         if (result.done) {
-          currentReadingData = {
-            question: question,
-            spreadType: selectedSpreadType,
-            mode: currentDivinationMode,
-            cards: selectedCards.map(function(c) {
-              return {
-                name: c.name,
-                img: c.img,
-                isReversed: c.isReversed,
-                meaning: c.meaning,
-                upright: c.upright,
-                reversed: c.reversed
-              };
-            }),
-            reading: fullReading
-          };
+          finishReading();
           return;
         }
-        buffer += decoder.decode(result.value, { stream: true });
-        var lines = buffer.split('\n');
+        var chunkText = decoder.decode(result.value, { stream: true });
+        buffer += chunkText;
+        rawAll += chunkText;
+        if (buffer.charCodeAt(0) === 0xFEFF) buffer = buffer.slice(1);   // 去 BOM
+        var lines = buffer.split(/\r?\n/);
         buffer = lines.pop();
         for (var i = 0; i < lines.length; i++) {
           var line = lines[i];
-          if (!line.startsWith('data: ')) continue;
-          var data = line.slice(6).trim();
-          if (data === '[DONE]') {
-            currentReadingData = {
-              question: question,
-              spreadType: selectedSpreadType,
-              mode: currentDivinationMode,
-              cards: selectedCards.map(function(c) {
-                return {
-                  name: c.name,
-                  img: c.img,
-                  isReversed: c.isReversed,
-                  meaning: c.meaning,
-                  upright: c.upright,
-                  reversed: c.reversed
-                };
-              }),
-              reading: fullReading
-            };
-            return;
+          // 兼容 "data:" 与 "data: " 两种写法
+          if (!/^data:\s?/.test(line)) continue;
+          var data = line.replace(/^data:\s?/, '').trim();
+          if (!data || data === '[DONE]') {
+            if (data === '[DONE]') { finishReading(); return; }
+            continue;
           }
           try {
             var json = JSON.parse(data);
-            if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
-              var content = json.choices[0].delta.content;
-              textDiv.innerText += content;
-              fullReading += content;
+            var ch = json.choices && json.choices[0];
+            // 兼容增量 delta 与一次性 message 两种返回
+            var piece = ch && ((ch.delta && ch.delta.content) || (ch.message && ch.message.content));
+            if (piece && fullReading.indexOf(piece) === -1) {
+              // message 形式可能整段重复，去重保护
+              if (ch.message && ch.message.content) { textDiv.innerText = String(piece); fullReading = String(piece); }
+              else { textDiv.innerText += piece; fullReading += piece; }
             }
           } catch (e) { /* 跳过非JSON行 */ }
         }
         readStream();
+      }).catch(function(e) {
+        finishReading();
       });
     }
     readStream();
