@@ -177,7 +177,12 @@ export default {
       const username = normName(body.username);
       const password = String(body.password == null ? '' : body.password);
 
-      if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]{2,16}$/.test(username)) {
+      if (username.indexOf('@') !== -1) {
+        // 邮箱作为账号
+        if (!/^[A-Za-z0-9._%+-]{1,32}@[A-Za-z0-9.-]{1,32}\.[A-Za-z]{2,8}$/.test(username) || username.length > 48) {
+          return json({ ok: false, msg: '邮箱格式不正确' });
+        }
+      } else if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]{2,16}$/.test(username)) {
         return json({ ok: false, msg: '账号需 2-16 位，中英文/数字/下划线' });
       }
       if (password.length < 6 || password.length > 32) {
