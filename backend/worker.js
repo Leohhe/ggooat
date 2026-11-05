@@ -33,6 +33,8 @@ const CORS = {
 
 const KEY_CODES = 'codes';
 const KEY_LOGS = 'logs';
+const KEY_BENEFIT_CARDS = 'cards_benefit';        // 活跃权益卡密 [{code,plan,createdAt,note}]
+const KEY_BENEFIT_USED = 'cards_benefit_used';    // 已用卡密审计 [{code,plan,username,usedAt}]
 const INITIAL_CREDITS = 5;
 const SESSION_TTL_USER = 60 * 60 * 24 * 30;   // 30 天
 const SESSION_TTL_ADMIN = 60 * 60 * 24 * 7;   // 7 天
@@ -212,6 +214,29 @@ async function loadCodes(env) {
   try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; } catch (e) { return []; }
 }
 async function saveCodes(env, list) { await env.CODES.put(KEY_CODES, JSON.stringify(list)); }
+
+async function loadBenefitCards(env) {
+  const raw = await env.CODES.get(KEY_BENEFIT_CARDS);
+  if (!raw) return [];
+  try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+async function saveBenefitCards(env, list) { await env.CODES.put(KEY_BENEFIT_CARDS, JSON.stringify(list)); }
+async function loadUsedBenefit(env) {
+  const raw = await env.CODES.get(KEY_BENEFIT_USED);
+  if (!raw) return [];
+  try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+async function saveUsedBenefit(env, list) { await env.CODES.put(KEY_BENEFIT_USED, JSON.stringify(list.slice(-2000))); }
+
+// 权益卡密：crypto.getRandomValues 强随机，5x4 无歧义字符（去除 0/O/1/I），~100 bit 熵
+const CARD_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+function genCardCode() {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  let code = '';
+  for (let i = 0; i < 20; i++) code += CARD_ALPHABET[bytes[i] % CARD_ALPHABET.length];
+  return 'GG-' + code.slice(0, 5) + '-' + code.slice(5, 10) + '-' + code.slice(10, 15) + '-' + code.slice(15, 20);
+}
 
 async function loadLogs(env) {
   const raw = await env.CODES.get(KEY_LOGS);
@@ -461,11 +486,70 @@ export default {
     }
 
     // ---------- 兑换 ----------
+    // 支付档位与订单辅助（次数码 / 权益卡密 / 支付共用）
+    // type: pack=次数包(加次数余额) card=会员卡(每日额度+有效期) buyout=买断(永久+每日额度)
+    const PAY_PLANS = {
+      p2: { type: 'pack', credits: 2, amount: '1.00', name: '体验包 · 2 次' },
+      p13: { type: 'pack', credits: 13, amount: '5.00', name: '畅享包 · 13 次' },
+      p25: { type: 'pack', credits: 25, amount: '10.00', name: '超值包 · 25 次' },
+      day: { type: 'card', card: 'day', days: 1, perDay: 40, amount: '5.88', name: '天卡 · 每天40次 · 1天' },
+      week: { type: 'card', card: 'week', days: 7, perDay: 30, amount: '18.88', name: '周卡 · 每天30次 · 7天' },
+      month: { type: 'card', card: 'month', days: 30, perDay: 20, amount: '32.88', name: '月卡 · 每天20次 · 30天' },
+      forever: { type: 'buyout', perDay: 50, amount: '88.00', name: '买断 · 每天50次 · 永久' },
+    };
+    const PAY_RETURN_URL = 'https://ggooat.xyz/pay/return.html';
+
+    function orderKey(no) { return 'order:' + normName(no); }
+    async function loadOrder(env, no) {
+      const raw = await env.CODES.get(orderKey(no));
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch (e) { return null; }
+    }
+    async function saveOrder(env, order) { await env.CODES.put(orderKey(order.outTradeNo), JSON.stringify(order)); }
+    function payNow() { return new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }); }
+
     if (path === '/api/redeem' && request.method === 'POST') {
       const body = await readBody(request);
       const code = normCode(body.code);
       if (!code) return json({ ok: false, msg: '请输入兑换码' });
 
+      // ---- 权益卡密优先匹配（一次性：兑换成功即从卡库删除，写入审计，无法重复使用） ----
+      const cards = await loadBenefitCards(env);
+      const cardIdx = cards.findIndex((c) => normCode(c.code) === code);
+      if (cardIdx >= 0) {
+        const ctx = await requireUser(env, request);
+        if (!ctx) return json({ ok: false, msg: '权益卡密需登录后兑换，请先登录' }, 401);
+        const card = cards[cardIdx];
+        const plan = PAY_PLANS[card.plan];
+        if (!plan) return json({ ok: false, msg: '卡密对应的权益不存在，请联系管理员' });
+        const u = ctx.user;
+        if (plan.type === 'card') {
+          const base = (u.membershipExpiry && new Date(u.membershipExpiry).getTime() > Date.now())
+            ? new Date(u.membershipExpiry).getTime() : Date.now();
+          u.membershipExpiry = new Date(base + plan.days * 86400000).toISOString();
+          u.membershipType = plan.card;
+        } else if (plan.type === 'buyout') {
+          u.lifetime = true;
+        } else {
+          u.credits = (parseInt(u.credits, 10) || 0) + (parseInt(plan.credits, 10) || 0);
+        }
+        u.lastSeen = payNow();
+        await saveUser(env, u);
+        cards.splice(cardIdx, 1);
+        await saveBenefitCards(env, cards);
+        const used = await loadUsedBenefit(env);
+        used.push({ code: card.code, plan: card.plan, username: u.username, usedAt: payNow() });
+        await saveUsedBenefit(env, used);
+        const expiryText = (plan.type === 'card' && u.membershipExpiry)
+          ? '，会员有效期至 ' + new Date(u.membershipExpiry).toLocaleDateString('zh-CN') : '';
+        return json({
+          ok: true, benefit: true, planName: plan.name,
+          credits: u.credits, profile: publicProfile(u),
+          msg: '兑换成功！「' + plan.name + '」已到账' + expiryText,
+        });
+      }
+
+      // ---- 次数兑换码 ----
       const list = await loadCodes(env);
       const item = list.find((c) => normCode(c.code) === code);
       if (!item) return json({ ok: false, msg: '兑换码无效，请检查后重试' });
@@ -501,26 +585,7 @@ export default {
     }
 
     // ---------- 支付（AI 网页应用收款：下单 / 异步通知 / 状态查询） ----------
-    // type: pack=次数包(加次数余额) card=会员卡(每日额度+有效期) buyout=买断(永久+每日额度)
-    const PAY_PLANS = {
-      p2: { type: 'pack', credits: 2, amount: '1.00', name: '体验包 · 2 次' },
-      p13: { type: 'pack', credits: 13, amount: '5.00', name: '畅享包 · 13 次' },
-      p25: { type: 'pack', credits: 25, amount: '10.00', name: '超值包 · 25 次' },
-      day: { type: 'card', card: 'day', days: 1, perDay: 40, amount: '5.88', name: '天卡 · 每天40次 · 1天' },
-      week: { type: 'card', card: 'week', days: 7, perDay: 30, amount: '18.88', name: '周卡 · 每天30次 · 7天' },
-      month: { type: 'card', card: 'month', days: 30, perDay: 20, amount: '32.88', name: '月卡 · 每天20次 · 30天' },
-      forever: { type: 'buyout', perDay: 50, amount: '88.00', name: '买断 · 每天50次 · 永久' },
-    };
-    const PAY_RETURN_URL = 'https://ggooat.xyz/pay/return.html';
 
-    function orderKey(no) { return 'order:' + normName(no); }
-    async function loadOrder(env, no) {
-      const raw = await env.CODES.get(orderKey(no));
-      if (!raw) return null;
-      try { return JSON.parse(raw); } catch (e) { return null; }
-    }
-    async function saveOrder(env, order) { await env.CODES.put(orderKey(order.outTradeNo), JSON.stringify(order)); }
-    function payNow() { return new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }); }
 
     // 发货幂等：仅未支付订单入账一次（KV 无事务，以状态字段为准）
     async function creditOrderOnce(env, order, tradeNo) {
@@ -785,6 +850,44 @@ export default {
       if (action === 'list') return json({ ok: true, codes: await loadCodes(env) });
 
       if (action === 'logs') return json({ ok: true, logs: await loadLogs(env) });
+
+      // ---- 权益卡密管理 ----
+      if (action === 'cards/list') {
+        return json({ ok: true, cards: await loadBenefitCards(env), used: await loadUsedBenefit(env) });
+      }
+
+      if (action === 'cards/gen' && request.method === 'POST') {
+        const body = await readBody(request);
+        const planKey = normName(body.plan);
+        const plan = PAY_PLANS[planKey];
+        if (!plan) return json({ ok: false, msg: '无效的权益档位' });
+        const count = Math.min(100, Math.max(1, parseInt(body.count, 10) || 1));
+        const note = String(body.note || '').slice(0, 40);
+        const cards = await loadBenefitCards(env);
+        const exist = new Set(cards.map((c) => normCode(c.code)));
+        const created = [];
+        let guard = 0;
+        while (created.length < count && guard < count * 50) {
+          guard++;
+          const code = genCardCode();
+          if (exist.has(normCode(code))) continue;
+          exist.add(normCode(code));
+          const item = { code: code, plan: planKey, createdAt: payNow(), note: note };
+          cards.push(item);
+          created.push(item);
+        }
+        await saveBenefitCards(env, cards);
+        return json({ ok: true, msg: '已生成 ' + created.length + ' 张「' + plan.name + '」卡密', codes: created.map((c) => c.code), cards: cards });
+      }
+
+      if (action === 'cards/delete' && request.method === 'POST') {
+        const body = await readBody(request);
+        const code = normCode(body.code);
+        const before = await loadBenefitCards(env);
+        const cards = before.filter((c) => normCode(c.code) !== code);
+        await saveBenefitCards(env, cards);
+        return json({ ok: true, msg: before.length === cards.length ? '未找到该卡密' : '已删除', cards: cards });
+      }
 
       if (action === 'save' && request.method === 'POST') {
         const body = await readBody(request);
