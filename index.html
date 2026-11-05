@@ -5696,15 +5696,22 @@ function onNicknameClick() {
   focusNickname();
 }
 
-// 是否为有效会员（会员卡有效期内或买断）：会员使用不扣次数余额，只受每日额度限制
+// 是否为有效会员（会员卡有效期内或买断）：会员赠次当天有效，未用完清零次日重发
 function isMemberNow() {
   return !!(authUser && authUser.membership && authUser.membership.active);
 }
 
-// 登录用户消耗 1 次（先本地扣，再云端校正；会员免费，只计每日额度）
+// 会员今日赠次剩余（无数据时视为有）
+function memberPoolLeft() {
+  if (!isMemberNow()) return 0;
+  var d = authUser.dailyRemaining;
+  return typeof d === 'number' ? Math.max(0, d) : 99;
+}
+
+// 登录用户消耗 1 次（先本地扣，再云端校正；扣费顺序：会员赠次优先 → 余额次数兜底）
 function spendOneCredit(current) {
-  var memberNow = isMemberNow();
-  if (!memberNow) setCredits(current - 1);
+  var usePool = memberPoolLeft() > 0;
+  if (!usePool) setCredits(current - 1);   // 会员赠次已用完或非会员：本地预扣余额
   if (!getAuthToken()) return;
   apiFetch('/api/user/spend', {}).then(function (res) {
     if (res && res.ok) {
@@ -5712,8 +5719,8 @@ function spendOneCredit(current) {
       if (res.membership && authUser) authUser.membership = res.membership;
       if (authUser) authUser.dailyRemaining = res.remaining;
     } else if (res && res.msg) {
-      // 云端拒绝（超出每日额度 / 次数不足）：回滚本地预扣并提示
-      if (!memberNow) setCredits(current);
+      // 云端拒绝（赠次与余额均不足 / 超每日上限）：回滚本地预扣并提示
+      if (!usePool) setCredits(current);
       if (res.membership && authUser) authUser.membership = res.membership;
       if (authUser) authUser.dailyRemaining = res.remaining;
       showToast(res.msg);
@@ -5721,14 +5728,12 @@ function spendOneCredit(current) {
   }).catch(function () { /* 网络差时以本地为准，下次操作会再同步 */ });
 }
 
-// 使用前置校验：非会员需要次数余额；会员只受每日额度（服务端权威校验）
+// 使用前置校验：会员赠次或余额次数任一可用即可；服务端权威校验
 function canUseNow() {
-  if (isMemberNow()) return true;
-  if (getCredits() <= 0) {
-    showToast('次数已用完，请充值次数包或开通会员');
-    return false;
-  }
-  return true;
+  if (memberPoolLeft() > 0) return true;
+  if (getCredits() > 0) return true;
+  showToast(isMemberNow() ? '今日会员次数与余额次数均已用完，请充值次数包' : '次数已用完，请充值次数包或开通会员');
+  return false;
 }
 
 function redeemCode() {
@@ -6237,12 +6242,12 @@ var PAY_TYPE_NAMES = { forever: '买断', month: '月卡', week: '周卡', day: 
 function payMemberText() {
   var mem = authUser && authUser.membership;
   if (!mem) return '';
-  if (mem.active && mem.lifetime) return '会员状态：买断（永久）· 每天 ' + mem.cap + ' 次';
+  if (mem.active && mem.lifetime) return '会员状态：买断（永久）· 每天赠送 ' + mem.cap + ' 次（当日有效）';
   if (mem.active && mem.type) {
     var exp = String(mem.expiry || '').slice(0, 10);
-    return '会员状态：' + (PAY_TYPE_NAMES[mem.type] || mem.type) + (exp ? ' · ' + exp + ' 到期' : '') + ' · 每天 ' + mem.cap + ' 次';
+    return '会员状态：' + (PAY_TYPE_NAMES[mem.type] || mem.type) + (exp ? ' · ' + exp + ' 到期' : '') + ' · 每天赠送 ' + mem.cap + ' 次（当日有效，用完自动扣余额次数）';
   }
-  return '当前为普通用户 · 每天 ' + (mem.cap || 10) + ' 次';
+  return '当前为普通用户 · 消耗余额次数';
 }
 
 function renderPayStatus() {
@@ -6251,17 +6256,19 @@ function renderPayStatus() {
   var cc = document.getElementById('payCreditCount');
   if (cc) cc.textContent = getCredits();
   var mem = authUser && authUser.membership;
-  var today = mem && typeof mem.cap === 'number'
-    ? ' ｜ 今日剩余：' + Math.max(0, (typeof authUser.dailyRemaining === 'number' ? authUser.dailyRemaining : mem.cap)) + '/' + mem.cap + ' 次'
-    : '';
+  var today = '';
+  if (mem && mem.active && typeof mem.cap === 'number') {
+    var left = Math.max(0, (typeof authUser.dailyRemaining === 'number' ? authUser.dailyRemaining : mem.cap));
+    today = ' ｜ 今日可用 ' + (left + getCredits()) + ' 次（会员赠次 ' + left + '/' + mem.cap + ' + 余额 ' + getCredits() + '）';
+  }
   line.innerHTML = '剩余次数：<b id="payCreditCount">' + getCredits() + '</b>' + today
     + '<br><span style="font-size:11px;color:var(--text-muted)">' + payMemberText() + '</span>';
 }
 
 function payPlanCard(p) {
   var desc = '';
-  if (p.type === 'card') desc = '每日 ' + p.perDay + ' 次 · 有效期 ' + p.days + ' 天';
-  else if (p.type === 'buyout') desc = '每日 ' + p.perDay + ' 次 · 永久有效';
+  if (p.type === 'card') desc = '每天赠 ' + p.perDay + ' 次（当日有效）· ' + p.days + ' 天';
+  else if (p.type === 'buyout') desc = '每天赠 ' + p.perDay + ' 次（当日有效）· 永久';
   else desc = '到账 ' + p.credits + ' 次次数';
   return '<div class="pay-plan" onclick="doBuyPay(\'' + p.id + '\', this)">'
     + '<div><div class="pay-plan-name">' + p.name + '</div>'
