@@ -1,4 +1,2 @@
+.playwright-cli/
 node_modules/
-.wrangler/
-*.log
-.DS_Store
