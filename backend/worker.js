@@ -88,6 +88,45 @@ function publicProfile(user) {
     avatar: user.profile ? (user.profile.avatar || '') : '',
     credits: user.credits,
     history: Array.isArray(user.history) ? user.history : [],
+    membership: memberInfo(user),
+    dailyCap: dailyCapOf(user),
+    dailyRemaining: dailyRemainingOf(user),
+  };
+}
+
+// ---------- 会员与每日使用额度模型 ----------
+// 每日额度：非会员 10/天；天卡 40/天；周卡 30/天；月卡 20/天；买断 50/天（无时间限制）
+// 会员有效期内使用不扣次数余额；非会员每次消耗 1 次数（余额来自次数包/兑换码）
+const DAILY_CAPS = { day: 40, week: 30, month: 20, lifetime: 50, free: 10 };
+
+function cnDate() {
+  return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+}
+function isMemberActive(user) {
+  if (user.lifetime) return true;
+  if (!user.membershipType || !user.membershipExpiry) return false;
+  const t = new Date(user.membershipExpiry).getTime();
+  return !isNaN(t) && t > Date.now();
+}
+function dailyCapOf(user) {
+  if (user.lifetime) return DAILY_CAPS.lifetime;
+  if (isMemberActive(user)) return DAILY_CAPS[user.membershipType] || DAILY_CAPS.free;
+  return DAILY_CAPS.free;
+}
+function dailyUsedOf(user) {
+  return user.usageDate === cnDate() ? (parseInt(user.usageCount, 10) || 0) : 0;
+}
+function dailyRemainingOf(user) {
+  return Math.max(0, dailyCapOf(user) - dailyUsedOf(user));
+}
+function memberInfo(user) {
+  const active = isMemberActive(user);
+  return {
+    active: active,
+    lifetime: !!user.lifetime,
+    type: active ? (user.lifetime ? 'forever' : user.membershipType) : '',
+    expiry: user.membershipExpiry || '',
+    cap: dailyCapOf(user),
   };
 }
 
@@ -355,10 +394,40 @@ export default {
       }
 
       if (action === 'spend') {
-        ctx.user.credits = Math.max(0, (parseInt(ctx.user.credits, 10) || 0) - 1);
+        // 每日额度（以东八区日期为界）+ 会员/非会员消耗规则
+        const today = cnDate();
+        if (ctx.user.usageDate !== today) {
+          ctx.user.usageDate = today;
+          ctx.user.usageCount = 0;
+        }
+        const cap = dailyCapOf(ctx.user);
+        const used = parseInt(ctx.user.usageCount, 10) || 0;
+        if (used >= cap) {
+          return json({
+            ok: false, dailyCap: cap, remaining: 0,
+            membership: memberInfo(ctx.user),
+            msg: ctx.user.lifetime ? '今日 50 次已用完，明天再来'
+              : isMemberActive(ctx.user) ? '今日会员次数已用完，明天再来'
+                : '今日免费额度（10 次）已用完，开通会员每天最多 20-50 次',
+          });
+        }
+        const member = isMemberActive(ctx.user);
+        if (!member) {
+          if ((parseInt(ctx.user.credits, 10) || 0) < 1) {
+            return json({ ok: false, dailyCap: cap, remaining: cap - used, membership: memberInfo(ctx.user), msg: '次数不足，请充值次数包或开通会员' });
+          }
+          ctx.user.credits = (parseInt(ctx.user.credits, 10) || 0) - 1;
+        }
+        ctx.user.usageCount = used + 1;
         ctx.user.lastSeen = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
         await saveUser(env, ctx.user);
-        return json({ ok: true, credits: ctx.user.credits });
+        return json({
+          ok: true,
+          credits: ctx.user.credits,
+          dailyCap: cap,
+          remaining: Math.max(0, cap - (used + 1)),
+          membership: memberInfo(ctx.user),
+        });
       }
 
       if (action === 'setcredits') {
@@ -432,10 +501,15 @@ export default {
     }
 
     // ---------- 支付（AI 网页应用收款：下单 / 异步通知 / 状态查询） ----------
+    // type: pack=次数包(加次数余额) card=会员卡(每日额度+有效期) buyout=买断(永久+每日额度)
     const PAY_PLANS = {
-      p10: { credits: 10, amount: '6.00', name: '占卜次数 10 次' },
-      p50: { credits: 50, amount: '25.00', name: '占卜次数 50 次' },
-      p150: { credits: 150, amount: '60.00', name: '占卜次数 150 次' },
+      p2: { type: 'pack', credits: 2, amount: '1.00', name: '体验包 · 2 次' },
+      p13: { type: 'pack', credits: 13, amount: '5.00', name: '畅享包 · 13 次' },
+      p25: { type: 'pack', credits: 25, amount: '10.00', name: '超值包 · 25 次' },
+      day: { type: 'card', card: 'day', days: 1, perDay: 40, amount: '5.88', name: '天卡 · 每天40次 · 1天' },
+      week: { type: 'card', card: 'week', days: 7, perDay: 30, amount: '18.88', name: '周卡 · 每天30次 · 7天' },
+      month: { type: 'card', card: 'month', days: 30, perDay: 20, amount: '32.88', name: '月卡 · 每天20次 · 30天' },
+      forever: { type: 'buyout', perDay: 50, amount: '88.00', name: '买断 · 每天50次 · 永久' },
     };
     const PAY_RETURN_URL = 'https://ggooat.xyz/pay/return.html';
 
@@ -459,10 +533,22 @@ export default {
       target.paidAt = payNow();
       const u = await loadUser(env, target.username);
       if (u) {
-        u.credits = (parseInt(u.credits, 10) || 0) + parseInt(target.credits, 10);
+        const plan = PAY_PLANS[target.plan] || {};
+        if (plan.type === 'card') {
+          // 会员卡：从当前有效期（未过期则顺延）起增加天数
+          const base = (u.membershipExpiry && new Date(u.membershipExpiry).getTime() > Date.now())
+            ? new Date(u.membershipExpiry).getTime() : Date.now();
+          u.membershipExpiry = new Date(base + plan.days * 86400000).toISOString();
+          u.membershipType = plan.card;
+        } else if (plan.type === 'buyout') {
+          u.lifetime = true;
+        } else {
+          u.credits = (parseInt(u.credits, 10) || 0) + parseInt(target.credits, 10);
+        }
         u.lastSeen = payNow();
         await saveUser(env, u);
         target.settledCredits = u.credits;
+        target.settledMembership = memberInfo(u);
       }
       await saveOrder(env, target);
       return { credited: true, order: target, credits: u ? u.credits : null };
@@ -470,7 +556,15 @@ export default {
 
     if (path === '/api/pay/plans' && request.method === 'GET') {
       const cfg = loadAlipayConfig(env);
-      const plans = Object.keys(PAY_PLANS).map((k) => ({ id: k, credits: PAY_PLANS[k].credits, amount: PAY_PLANS[k].amount, name: PAY_PLANS[k].name }));
+      const plans = Object.keys(PAY_PLANS).map((k) => ({
+        id: k,
+        type: PAY_PLANS[k].type,
+        credits: PAY_PLANS[k].credits || 0,
+        perDay: PAY_PLANS[k].perDay || 0,
+        days: PAY_PLANS[k].days || 0,
+        amount: PAY_PLANS[k].amount,
+        name: PAY_PLANS[k].name,
+      }));
       return json({ ok: true, plans: plans, enabled: cfg.ok });
     }
 
@@ -569,7 +663,7 @@ export default {
 
       if (order.status === 'PAID') {
         const u = await loadUser(env, order.username);
-        return json({ ok: true, status: 'PAID', credits: u ? u.credits : null, amount: order.amount, plan: order.plan });
+        return json({ ok: true, status: 'PAID', credits: u ? u.credits : null, membership: u ? memberInfo(u) : null, amount: order.amount, plan: order.plan });
       }
 
       const cfg = loadAlipayConfig(env);
@@ -581,7 +675,7 @@ export default {
         if (state === 'PAID') {
           const res = await creditOrderOnce(env, order, r.trade_no);
           const u = await loadUser(env, order.username);
-          return json({ ok: true, status: 'PAID', credits: u ? u.credits : null, amount: order.amount, plan: order.plan });
+          return json({ ok: true, status: 'PAID', credits: u ? u.credits : null, membership: u ? memberInfo(u) : null, amount: order.amount, plan: order.plan });
         }
         return json({ ok: true, status: state });
       }
