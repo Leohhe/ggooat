@@ -2338,10 +2338,10 @@ body{
 .profile-login-hint .hint-sub{
   font-size:10.5px;color:var(--text-muted);margin-top:6px;line-height:1.6;
 }
-/* ========== 登录弹窗（粉紫渐变模板风格） ========== */
+/* ========== 登录弹窗（蓝色渐变模板风格） ========== */
 .login-mask{
   position:absolute;inset:0;z-index:120;
-  background:linear-gradient(180deg,#fdf6f3 0%,#f9eff5 55%,#f3ecfb 100%);
+  background:linear-gradient(180deg,#f4f8fd 0%,#edf4fc 55%,#e8f0fa 100%);
   display:none;align-items:center;justify-content:center;
   padding:0 22px;
   overflow-y:auto;-webkit-overflow-scrolling:touch;
@@ -2350,37 +2350,37 @@ body{
 body.night .login-mask{background:linear-gradient(180deg,#17102a 0%,#150e26 55%,#120c20 100%)}
 .login-box{
   width:100%;max-width:330px;
-  background:linear-gradient(170deg,#fffdfc 0%,#fdf6f9 60%,#fbf5fd 100%);
+  background:linear-gradient(170deg,#fcfdff 0%,#f6f9fe 60%,#f4f8fd 100%);
   border-radius:30px;padding:30px 24px 20px;
-  box-shadow:0 24px 60px rgba(214,120,160,0.18),0 4px 14px rgba(214,120,160,0.08);
-  border:1.5px solid rgba(240,183,208,0.55);
+  box-shadow:0 24px 60px rgba(90,140,210,0.18),0 4px 14px rgba(90,140,210,0.08);
+  border:1.5px solid rgba(150,185,230,0.55);
   margin:auto 0;
   animation:loginUp 0.32s var(--transition-bounce);
 }
 @keyframes loginUp{from{opacity:0;transform:translateY(14px) scale(0.97)}to{opacity:1;transform:none}}
 .login-title{
   font-size:19px;font-weight:800;
-  color:#e85d8a;text-align:center;letter-spacing:0.12em;
+  color:#2e7ce0;text-align:center;letter-spacing:0.12em;
 }
 .login-sub{
-  font-size:11px;color:#b99aac;text-align:center;
+  font-size:11px;color:#8fa3bd;text-align:center;
   margin:7px 0 16px;line-height:1.5;
 }
 .login-label{
-  display:block;font-size:12px;font-weight:700;color:#6b5560;
+  display:block;font-size:12px;font-weight:700;color:#46586f;
   margin:10px 0 6px;letter-spacing:0.02em;
 }
 .login-input{
   width:100%;height:44px;border-radius:999px;
-  border:1.5px solid rgba(233,168,195,0.5);
+  border:1.5px solid rgba(140,180,228,0.5);
   background:rgba(255,255,255,0.92);
-  padding:0 16px;font-size:13px;color:#5a4652;
+  padding:0 16px;font-size:13px;color:#42526b;
   outline:none;transition:border-color 0.25s,box-shadow 0.25s;
 }
-.login-input::placeholder{color:#c9b2bd;opacity:0.85}
+.login-input::placeholder{color:#a8bccf;opacity:0.85}
 .login-input:focus{
-  border-color:#ec8fb4;
-  box-shadow:0 0 0 3px rgba(236,143,180,0.15);
+  border-color:#4d94e8;
+  box-shadow:0 0 0 3px rgba(77,148,232,0.15);
   background:#fff;
 }
 .login-row{
@@ -2389,53 +2389,53 @@ body.night .login-mask{background:linear-gradient(180deg,#17102a 0%,#150e26 55%,
 }
 .login-check{
   display:flex;align-items:center;gap:4px;
-  font-size:11px;color:#8a7380;cursor:pointer;user-select:none;
+  font-size:11px;color:#7d90a8;cursor:pointer;user-select:none;
 }
-.login-check input{width:14px;height:14px;accent-color:#ec6f9e;cursor:pointer;flex:none}
-.login-link{font-size:11.5px;font-weight:700;color:#ec6f9e;cursor:pointer;letter-spacing:0.02em}
+.login-check input{width:14px;height:14px;accent-color:#2f80e0;cursor:pointer;flex:none}
+.login-link{font-size:11.5px;font-weight:700;color:#2f80e0;cursor:pointer;letter-spacing:0.02em}
 .login-link:active{opacity:0.7}
-.login-hint-small{font-size:10px;color:#c3aeb7;margin-top:7px}
+.login-hint-small{font-size:10px;color:#b0c2d6;margin-top:7px}
 .login-agree{
   display:flex;align-items:center;gap:5px;
-  font-size:11px;color:#8a7380;margin:14px 0 2px;cursor:pointer;user-select:none;flex-wrap:wrap;
+  font-size:11px;color:#7d90a8;margin:14px 0 2px;cursor:pointer;user-select:none;flex-wrap:wrap;
 }
-.login-agree input{width:15px;height:15px;accent-color:#ec6f9e;cursor:pointer;flex:none}
-.login-agree em{font-style:normal;font-weight:700;color:#ec6f9e;cursor:pointer}
+.login-agree input{width:15px;height:15px;accent-color:#2f80e0;cursor:pointer;flex:none}
+.login-agree em{font-style:normal;font-weight:700;color:#2f80e0;cursor:pointer}
 .login-btns{display:flex;gap:9px;margin-top:14px}
 .login-btn{
   width:100%;flex:1;height:46px;border-radius:999px;cursor:pointer;
   font-size:14px;font-weight:700;letter-spacing:0.15em;
-  border:1.5px solid rgba(233,168,195,0.5);
-  background:rgba(255,255,255,0.9);color:#d9648f;
+  border:1.5px solid rgba(140,180,228,0.5);
+  background:rgba(255,255,255,0.9);color:#2f7de0;
   transition:all 0.25s;
   font-family:inherit;
 }
 .login-btn.primary{
-  background:linear-gradient(135deg,#f7a8c3 0%,#ec6f9e 55%,#b98af0 100%);
+  background:linear-gradient(135deg,#5aa2f0 0%,#2f80e0 55%,#4f6df0 100%);
   border:none;color:#fff;letter-spacing:0.35em;text-indent:0.35em;
-  box-shadow:0 8px 20px rgba(236,111,158,0.32);
+  box-shadow:0 8px 20px rgba(47,125,224,0.32);
 }
 .login-btn:active{transform:scale(0.97)}
 .login-btn:disabled{opacity:0.6;pointer-events:none}
 .login-switch{
-  text-align:center;font-size:11.5px;color:#8a7380;
+  text-align:center;font-size:11.5px;color:#7d90a8;
   margin-top:15px;
 }
 .login-alt{text-align:center;margin-top:8px}
 .login-tip{
-  text-align:center;font-size:11px;color:#b99aac;
+  text-align:center;font-size:11px;color:#8fa3bd;
   margin-top:12px;padding:6px;cursor:pointer;
 }
-body.night .login-box{background:linear-gradient(170deg,#1d1434 0%,#181030 60%,#150e28 100%);border-color:rgba(236,143,180,0.18);box-shadow:0 24px 60px rgba(0,0,0,0.4)}
-body.night .login-title{color:#f291b3}
-body.night .login-sub,body.night .login-hint-small,body.night .login-tip{color:#8d7e93}
-body.night .login-label{color:#c9b6c6}
-body.night .login-input{background:rgba(255,255,255,0.06);border-color:rgba(236,143,180,0.3);color:#f0e6f2}
-body.night .login-input::placeholder{color:#6f5f78}
-body.night .login-check,body.night .login-agree,body.night .login-switch{color:#a894a8}
-body.night .login-link,body.night .login-agree em{color:#f291b3}
-body.night .login-btn{background:rgba(255,255,255,0.06);color:#f291b3;border-color:rgba(236,143,180,0.35)}
-body.night .login-btn.primary{background:linear-gradient(135deg,#d97ba6 0%,#c05f96 55%,#8d6bd4 100%);color:#fff}
+body.night .login-box{background:linear-gradient(170deg,#101a30 0%,#0f1830 60%,#0d1526 100%);border-color:rgba(77,148,232,0.18);box-shadow:0 24px 60px rgba(0,0,0,0.4)}
+body.night .login-title{color:#6fb0f5}
+body.night .login-sub,body.night .login-hint-small,body.night .login-tip{color:#7d8ba3}
+body.night .login-label{color:#b9c6d9}
+body.night .login-input{background:rgba(255,255,255,0.06);border-color:rgba(77,148,232,0.3);color:#e6edf7}
+body.night .login-input::placeholder{color:#6b7a90}
+body.night .login-check,body.night .login-agree,body.night .login-switch{color:#8798ad}
+body.night .login-link,body.night .login-agree em{color:#6fb0f5}
+body.night .login-btn{background:rgba(255,255,255,0.06);color:#6fb0f5;border-color:rgba(77,148,232,0.35)}
+body.night .login-btn.primary{background:linear-gradient(135deg,#4a90e8 0%,#3a7bd8 55%,#5a6fe0 100%);color:#fff}
 /* 验证码行 */
 .login-field-code{display:flex;align-items:stretch;gap:8px}
 .login-field-code .login-input{margin:0}
@@ -2448,14 +2448,14 @@ body.night .login-btn.primary{background:linear-gradient(135deg,#d97ba6 0%,#c05f
 .agreement-box{max-width:330px}
 .agreement-body{
   max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  font-size:11px;color:#8a7380;line-height:1.8;text-align:left;
+  font-size:11px;color:#7d90a8;line-height:1.8;text-align:left;
   background:rgba(255,255,255,0.6);border-radius:16px;padding:14px 16px;
   margin:12px 0 14px;
 }
 .agreement-body p{margin-bottom:9px}
-.agreement-body b{color:#6b5560;font-size:11.5px;display:block;margin-bottom:2px}
-body.night .agreement-body{background:rgba(255,255,255,0.04);color:#a894a8}
-body.night .agreement-body b{color:#d8c6d8}
+.agreement-body b{color:#46586f;font-size:11.5px;display:block;margin-bottom:2px}
+body.night .agreement-body{background:rgba(255,255,255,0.04);color:#8798ad}
+body.night .agreement-body b{color:#c3d2e5}
 /* ========== 通用居中弹窗盒（API设置/兑换码/改名） ========== */
 .popup-box{
   width:100%;max-width:320px;
@@ -3293,7 +3293,7 @@ body.night .scene-label{color:var(--text-muted)}
       <div class="popup-title">兑换码</div>
       <div class="popup-sub" id="redeemCreditLine">剩余次数：<b id="creditCount">0</b></div>
       <div class="redeem-row" style="margin-top:14px">
-        <input type="text" id="redeemInput" class="redeem-input" placeholder="请输入兑换码" onkeydown="if(event.key==='Enter') redeemCode()">
+        <input type="text" id="redeemInput" class="redeem-input" placeholder="兑换码 / 权益卡密（GG-开头）" onkeydown="if(event.key==='Enter') redeemCode()">
         <button class="redeem-btn" onclick="redeemCode()">兑换</button>
       </div>
       <div class="account-hint" style="text-align:center">兑换后次数云端同步，所有设备生效</div>
@@ -3365,6 +3365,33 @@ body.night .scene-label{color:var(--text-muted)}
       <div class="settings-section">
         <div class="settings-label"><span class="label-icon">≡</span>兑换码列表</div>
         <div class="admin-code-list" id="adminCodeList"></div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label"><span class="label-icon">◆</span>权益卡密生成 <span style="font-weight:400;font-size:10px;color:var(--text-muted)">（一次性，兑换即作废）</span></div>
+        <div class="settings-row">
+          <select id="cardPlan" class="settings-input" style="flex:1.4">
+            <option value="p2">体验包 · 2 次（¥1）</option>
+            <option value="p13">畅享包 · 13 次（¥5）</option>
+            <option value="p25">超值包 · 25 次（¥10）</option>
+            <option value="day">天卡 · 每天40次 · 1天</option>
+            <option value="week">周卡 · 每天30次 · 7天</option>
+            <option value="month" selected>月卡 · 每天20次 · 30天</option>
+            <option value="forever">买断 · 每天50次 · 永久</option>
+          </select>
+          <input type="number" id="cardCount" class="settings-input" placeholder="数量" min="1" max="100" value="1" style="flex:0.8">
+        </div>
+        <div class="admin-gap"></div>
+        <input type="text" id="cardNote" class="settings-input" placeholder="备注，例如 活动赠送（可选）">
+        <button class="settings-save-btn" style="margin-top:14px" onclick="genAdminCards()"><span>生成卡密 ✦</span></button>
+        <textarea id="cardGenResult" class="settings-input" readonly
+          style="margin-top:12px;height:96px;display:none;font-family:monospace;font-size:11px;line-height:1.7;resize:none" onclick="this.select()"></textarea>
+        <div class="admin-hint" id="cardGenHint" style="display:none">点击卡密区全选，复制后发给用户；卡密兑换一次后立即作废。</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label"><span class="label-icon">◈</span>卡密列表 <span style="font-weight:400;font-size:10px;color:var(--text-muted)">（未用 / 已用）</span></div>
+        <div class="admin-code-list" id="adminCardList"></div>
       </div>
 
       <div class="settings-section">
@@ -5694,6 +5721,14 @@ function redeemCode() {
 
   apiFetch('/api/redeem', { code: code }).then(function (res) {
     done();
+    if (res && res.ok && res.benefit) {
+      // 权益卡密：次数包/会员卡/买断
+      if (res.profile) { saveAuthUser(res.profile); applyProfileToUI(); }
+      if (typeof res.credits === 'number') setCredits(res.credits);
+      input.value = '';
+      showToast(res.msg || '兑换成功');
+      return;
+    }
     if (res && res.ok) {
       if (typeof res.credits === 'number') setCredits(res.credits);
       else setCredits(res.count);
@@ -5750,7 +5785,117 @@ function enterAdminPanel() {
   loadAdminCodes();
   loadAdminLogs();
   loadAdminUsers();
+  loadAdminCards();
   showToast('已连接云端：改码后所有设备实时同步');
+}
+
+// ========== 权益卡密管理 ==========
+var adminCardsCache = null;
+var adminUsedCardsCache = [];
+var CARD_PLAN_NAMES = { p2: '体验包', p13: '畅享包', p25: '超值包', day: '天卡', week: '周卡', month: '月卡', forever: '买断' };
+
+function loadAdminCards() {
+  apiFetch('/api/admin/cards/list', { _: 1 }, true).then(function (res) {
+    adminCardsCache = (res && res.ok && Object.prototype.toString.call(res.cards) === '[object Array]') ? res.cards : [];
+    adminUsedCardsCache = (res && res.ok && Object.prototype.toString.call(res.used) === '[object Array]') ? res.used : [];
+    renderAdminCards();
+  }).catch(function () {
+    adminCardsCache = [];
+    adminUsedCardsCache = [];
+    renderAdminCards();
+  });
+}
+
+function renderAdminCards() {
+  var el = document.getElementById('adminCardList');
+  if (!el) return;
+  var cards = adminCardsCache || [];
+  var used = adminUsedCardsCache || [];
+  if (!cards.length && !used.length) {
+    el.innerHTML = '<div class="admin-empty">暂无卡密，请在上方生成</div>';
+    return;
+  }
+  var html = cards.slice().reverse().map(function (c) {
+    return '<div class="admin-code-item">' +
+      '<div class="admin-code-main">' +
+        '<div class="admin-code-name" style="font-family:monospace;letter-spacing:0.02em">' + c.code + '</div>' +
+        '<div class="admin-code-meta">' + (CARD_PLAN_NAMES[c.plan] || c.plan) +
+        (c.note ? ' · ' + c.note : '') + ' · ' + (c.createdAt || '') + '</div>' +
+      '</div>' +
+      '<div class="admin-code-actions">' +
+        '<span style="font-size:10px;color:#3a9d5f;font-weight:700">未用</span>' +
+        '<button class="admin-icon-btn" type="button" title="复制">复制</button>' +
+        '<button class="admin-icon-btn danger" type="button" title="删除">删除</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  html += used.slice(-30).reverse().map(function (c) {
+    return '<div class="admin-code-item" style="opacity:0.55">' +
+      '<div class="admin-code-main">' +
+        '<div class="admin-code-name" style="font-family:monospace;text-decoration:line-through">' + c.code + '</div>' +
+        '<div class="admin-code-meta">' + (CARD_PLAN_NAMES[c.plan] || c.plan) + ' · 已被 ' + c.username + ' 于 ' + (c.usedAt || '') + ' 兑换</div>' +
+      '</div>' +
+      '<div class="admin-code-actions"><span style="font-size:10px;color:#b06a6a;font-weight:700">已用</span></div>' +
+    '</div>';
+  }).join('');
+  el.innerHTML = html;
+  // 绑定按钮（未用卡密）
+  var live = cards.slice().reverse();
+  var items = el.querySelectorAll('.admin-code-item');
+  for (var i = 0; i < live.length && i < items.length; i++) {
+    (function (card, item) {
+      var btns = item.querySelectorAll('.admin-icon-btn');
+      if (btns[0]) btns[0].onclick = function () { copyCardCode(card.code); };
+      if (btns[1]) btns[1].onclick = function () { deleteAdminCard(card.code); };
+    })(live[i], items[i]);
+  }
+}
+
+function copyCardCode(code) {
+  function fallback() {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = code; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      showToast('已复制：' + code);
+    } catch (e) { showToast(code); }
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(function () { showToast('已复制：' + code); }, fallback);
+  } else fallback();
+}
+
+function genAdminCards() {
+  if (!adminToken) { showToast('请先登录后台'); return; }
+  var plan = document.getElementById('cardPlan').value;
+  var count = parseInt(document.getElementById('cardCount').value, 10) || 1;
+  var note = (document.getElementById('cardNote').value || '').trim();
+  var btn = document.querySelector('#adminPanel .settings-save-btn[onclick*="genAdminCards"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = 0.6; }
+  apiFetch('/api/admin/cards/gen', { plan: plan, count: count, note: note }, true).then(function (res) {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    if (res && res.ok) {
+      var box = document.getElementById('cardGenResult');
+      var hint = document.getElementById('cardGenHint');
+      if (box) { box.style.display = ''; box.value = (res.codes || []).join('\n'); }
+      if (hint) hint.style.display = '';
+      showToast(res.msg || '生成成功');
+      loadAdminCards();
+    } else {
+      showToast((res && res.msg) || '生成失败');
+    }
+  }).catch(function () {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    showToast('网络异常，生成失败');
+  });
+}
+
+function deleteAdminCard(code) {
+  if (!adminToken) { showToast('请先登录后台'); return; }
+  apiFetch('/api/admin/cards/delete', { code: code }, true).then(function (res) {
+    showToast((res && res.msg) || '已删除');
+    loadAdminCards();
+  }).catch(function () { showToast('网络异常，删除失败'); });
 }
 
 // 拉取注册用户列表
