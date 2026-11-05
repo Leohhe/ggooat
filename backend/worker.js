@@ -19,7 +19,10 @@
  *   POST /api/admin/setuser {username,credits}     设置某用户次数
  *
  * 环境绑定：CODES(KV)、ADMIN_USER(secret)、ADMIN_PASS(secret)
+ * 支付：alipay.js（支付宝配置取 ALIPAY_* 环境变量；订单存 KV order: 前缀）
  */
+
+import { loadAlipayConfig, buildPagePayForm, verifyNotifySign, alipayGatewayRequest, mapTradeStatus, normalizeAmountText } from './alipay.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -115,6 +118,25 @@ async function createSession(env, name, role, ttlSeconds) {
   const body = b64urlEncode(JSON.stringify(payload));
   const sig = await hmacHex(body, env.SESSION_SECRET);
   return 'v2.' + body + '.' + sig;
+}
+
+// 注册会话票据（邮箱验证通过后 10 分钟内有效，用于完成注册）
+async function createPending(env, email) {
+  const payload = b64urlEncode(JSON.stringify({ e: email, t: 'reg', exp: Date.now() + 10 * 60 * 1000 }));
+  const sig = await hmacHex(payload, env.SESSION_SECRET);
+  return 'p2.' + payload + '.' + sig;
+}
+async function getPending(env, token) {
+  if (!token || !env.SESSION_SECRET || !token.startsWith('p2.')) return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const expected = await hmacHex(parts[1], env.SESSION_SECRET);
+  if (expected !== parts[2]) return null;
+  try {
+    const payload = JSON.parse(b64urlDecode(parts[1]));
+    if (payload.t !== 'reg' || !payload.exp || payload.exp < Date.now()) return null;
+    return String(payload.e || '').toLowerCase();
+  } catch (e) { return null; }
 }
 
 async function getSession(env, request) {
@@ -238,6 +260,90 @@ export default {
       return json({ ok: true });
     }
 
+    // ---------- 邮箱验证码登录/注册第一步（前端先向 Supabase 校验验证码，这里校验其票据） ----------
+    if (path === '/api/auth/email-login' && request.method === 'POST') {
+      const body = await readBody(request);
+      const at = String(body.access_token == null ? '' : body.access_token);
+      if (!at || at.length > 4096) return json({ ok: false, msg: '登录票据无效' });
+
+      // 向 Supabase 换取真实用户信息（防止伪造票据）
+      let email = '';
+      try {
+        const r = await fetch(env.SUPABASE_URL + '/auth/v1/user', {
+          headers: { 'Authorization': 'Bearer ' + at, 'apikey': env.SUPABASE_ANON_KEY }
+        });
+        if (!r.ok) return json({ ok: false, msg: '登录校验失败，请重试' });
+        const u = await r.json();
+        if (!u || !u.email) return json({ ok: false, msg: '登录校验失败' });
+        email = String(u.email).toLowerCase();
+      } catch (e) {
+        return json({ ok: false, msg: '登录校验失败，请重试' });
+      }
+
+      // 已有账号：直接登录（邮箱即账号的旧账号，或邮箱绑定的账号）
+      let user = await loadUser(env, email);
+      if (!user) {
+        const bound = await env.CODES.get('email:' + email);
+        if (bound) user = await loadUser(env, bound);
+      }
+      if (user) {
+        user.lastSeen = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+        await saveUser(env, user);
+        const token = await createSession(env, user.username, 'user', SESSION_TTL_USER);
+        return json({ ok: true, token: token, profile: publicProfile(user), msg: '欢迎回来' });
+      }
+
+      // 新邮箱：不直接建号，发注册会话票据，让用户设置用户名和密码
+      return json({
+        ok: false,
+        pending: true,
+        pending_token: await createPending(env, email),
+        email: email,
+        msg: '邮箱验证成功，请设置用户名和密码完成注册'
+      });
+    }
+
+    // ---------- 邮箱注册第二步（设置用户名 + 密码） ----------
+    if (path === '/api/auth/email-register' && request.method === 'POST') {
+      const body = await readBody(request);
+      const email = await getPending(env, String(body.pending_token == null ? '' : body.pending_token));
+      if (!email) return json({ ok: false, msg: '注册会话已过期，请重新验证邮箱' });
+
+      const username = normName(body.username);
+      const password = String(body.password == null ? '' : body.password);
+      if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]{2,16}$/.test(username)) {
+        return json({ ok: false, msg: '用户名需 2-16 位，中英文/数字/下划线' });
+      }
+      if (password.length < 6 || password.length > 32) {
+        return json({ ok: false, msg: '密码需 6-32 位' });
+      }
+      // 用户名唯一：不能与任何已有账号（含邮箱账号、兑换码键）冲突
+      if (await loadUser(env, username)) {
+        return json({ ok: false, msg: '该用户名已被占用' });
+      }
+      // 该邮箱不能重复绑定
+      if (await env.CODES.get('email:' + email)) {
+        return json({ ok: false, msg: '该邮箱已绑定账号，请直接登录' });
+      }
+
+      const salt = randomHex(16);
+      const user = {
+        username: username,
+        email: email,
+        salt: salt,
+        hash: await hashPassword(password, salt),
+        credits: INITIAL_CREDITS,
+        profile: { nickname: username, avatar: '' },
+        history: [],
+        createdAt: new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }),
+        lastSeen: '',
+      };
+      await saveUser(env, user);
+      await env.CODES.put('email:' + email, username);
+      const token = await createSession(env, username, 'user', SESSION_TTL_USER);
+      return json({ ok: true, token: token, profile: publicProfile(user), msg: '注册成功！欢迎加入' });
+    }
+
     // ---------- 用户接口 ----------
     if (path.startsWith('/api/user/')) {
       const ctx = await requireUser(env, request);
@@ -323,6 +429,246 @@ export default {
 
       const remaining = maxUses > 0 ? Math.max(0, maxUses - item.used) : -1;
       return json({ ok: true, count: parseInt(item.count, 10) || 0, credits: credits, remaining: remaining });
+    }
+
+    // ---------- 支付（AI 网页应用收款：下单 / 异步通知 / 状态查询） ----------
+    const PAY_PLANS = {
+      p10: { credits: 10, amount: '6.00', name: '占卜次数 10 次' },
+      p50: { credits: 50, amount: '25.00', name: '占卜次数 50 次' },
+      p150: { credits: 150, amount: '60.00', name: '占卜次数 150 次' },
+    };
+    const PAY_RETURN_URL = 'https://ggooat.xyz/pay/return.html';
+
+    function orderKey(no) { return 'order:' + normName(no); }
+    async function loadOrder(env, no) {
+      const raw = await env.CODES.get(orderKey(no));
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch (e) { return null; }
+    }
+    async function saveOrder(env, order) { await env.CODES.put(orderKey(order.outTradeNo), JSON.stringify(order)); }
+    function payNow() { return new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }); }
+
+    // 发货幂等：仅未支付订单入账一次（KV 无事务，以状态字段为准）
+    async function creditOrderOnce(env, order, tradeNo) {
+      if (order.status === 'PAID') return { credited: false, order: order };
+      const fresh = await loadOrder(env, order.outTradeNo);
+      if (fresh && fresh.status === 'PAID') return { credited: false, order: fresh };
+      const target = fresh || order;
+      target.status = 'PAID';
+      target.tradeNo = tradeNo || target.tradeNo || '';
+      target.paidAt = payNow();
+      const u = await loadUser(env, target.username);
+      if (u) {
+        u.credits = (parseInt(u.credits, 10) || 0) + parseInt(target.credits, 10);
+        u.lastSeen = payNow();
+        await saveUser(env, u);
+        target.settledCredits = u.credits;
+      }
+      await saveOrder(env, target);
+      return { credited: true, order: target, credits: u ? u.credits : null };
+    }
+
+    if (path === '/api/pay/plans' && request.method === 'GET') {
+      const cfg = loadAlipayConfig(env);
+      const plans = Object.keys(PAY_PLANS).map((k) => ({ id: k, credits: PAY_PLANS[k].credits, amount: PAY_PLANS[k].amount, name: PAY_PLANS[k].name }));
+      return json({ ok: true, plans: plans, enabled: cfg.ok });
+    }
+
+    if (path === '/api/pay/create' && request.method === 'POST') {
+      const ctx = await requireUser(env, request);
+      if (!ctx) return json({ ok: false, msg: '请先登录' }, 401);
+      const body = await readBody(request);
+      const plan = PAY_PLANS[normName(body.plan)];
+      if (!plan) return json({ ok: false, msg: '无效的充值档位' });
+
+      const cfg = loadAlipayConfig(env);
+      if (!cfg.ok) return json({ ok: false, msg: '支付服务未配置，请联系管理员' }, 503);
+
+      const outTradeNo = 'GG' + Date.now().toString(36).toUpperCase() + randomHex(3).toUpperCase();
+      const order = {
+        outTradeNo: outTradeNo,
+        username: ctx.user.username,
+        plan: normName(body.plan),
+        credits: plan.credits,
+        amount: plan.amount,
+        subject: 'GgooAt ' + plan.name,
+        status: 'CREATED',
+        createdAt: payNow(),
+      };
+      await saveOrder(env, order);
+
+      try {
+        const paymentHtml = await buildPagePayForm(cfg, {
+          outTradeNo: outTradeNo,
+          totalAmount: plan.amount,
+          subject: order.subject,
+          returnUrl: PAY_RETURN_URL,
+        });
+        return json({ ok: true, out_trade_no: outTradeNo, paymentHtml: paymentHtml });
+      } catch (e) {
+        order.status = 'ERROR';
+        order.error = String(e.message || e).slice(0, 120);
+        await saveOrder(env, order);
+        return json({ ok: false, msg: '创建支付订单失败，请稍后重试' }, 502);
+      }
+    }
+
+    // 支付宝异步通知：POST 表单，验签 → 业务校验 → 幂等入账 → 纯文本 success/fail
+    if (path === '/api/pay/notify' && request.method === 'POST') {
+      const cfg = loadAlipayConfig(env);
+      if (!cfg.ok) return new Response('fail', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+
+      const params = {};
+      try {
+        const form = await request.formData();
+        for (const [k, v] of form.entries()) params[k] = String(v);
+      } catch (e) {
+        return new Response('fail', { status: 400, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      }
+
+      try {
+        if (!verifyNotifySign(params, cfg.alipayPublicKey)) {
+          return new Response('fail', { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+        }
+
+        const order = await loadOrder(env, params.out_trade_no);
+        const amountOk = normalizeAmountText(order && order.amount) === normalizeAmountText(params.total_amount);
+        const sellerOk = !cfg.sellerId || !params.seller_id || params.seller_id === cfg.sellerId;
+        if (!order || params.app_id !== cfg.appId || !amountOk || !sellerOk) {
+          return new Response('fail', { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+        }
+
+        // 只有付款成功且非退款/关单/分账事件才认定支付成功
+        const isPaidEvent = (params.trade_status === 'TRADE_SUCCESS' || params.trade_status === 'TRADE_FINISHED')
+          && !params.out_biz_no && !params.gmt_refund && !params.refund_fee;
+
+        if (isPaidEvent) {
+          await creditOrderOnce(env, order, params.trade_no);
+        } else {
+          const fresh = await loadOrder(env, order.outTradeNo);
+          if (fresh && fresh.status !== 'PAID') {
+            fresh.lastEvent = params.trade_status || '';
+            fresh.lastEventAt = payNow();
+            await saveOrder(env, fresh);
+          }
+        }
+        return new Response('success', { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      } catch (e) {
+        return new Response('fail', { status: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+      }
+    }
+
+    // 支付状态查询（同步回跳页轮询）：未收到通知时以 alipay.trade.query 补偿
+    if (path === '/api/pay/status' && request.method === 'GET') {
+      const ctx = await requireUser(env, request);
+      if (!ctx) return json({ ok: false, msg: '请先登录' }, 401);
+      const url = new URL(request.url);
+      const no = normName(url.searchParams.get('no'));
+      const order = await loadOrder(env, no);
+      if (!order || order.username !== ctx.user.username) return json({ ok: false, msg: '订单不存在' }, 404);
+
+      if (order.status === 'PAID') {
+        const u = await loadUser(env, order.username);
+        return json({ ok: true, status: 'PAID', credits: u ? u.credits : null, amount: order.amount, plan: order.plan });
+      }
+
+      const cfg = loadAlipayConfig(env);
+      if (!cfg.ok) return json({ ok: true, status: 'PENDING', msg: '支付服务未配置' });
+
+      const r = await alipayGatewayRequest(cfg, 'alipay.trade.query', { out_trade_no: no });
+      if (r.code === '10000') {
+        const state = mapTradeStatus(r.trade_status);
+        if (state === 'PAID') {
+          const res = await creditOrderOnce(env, order, r.trade_no);
+          const u = await loadUser(env, order.username);
+          return json({ ok: true, status: 'PAID', credits: u ? u.credits : null, amount: order.amount, plan: order.plan });
+        }
+        return json({ ok: true, status: state });
+      }
+      if (r.subCode === 'ACQ.TRADE_NOT_EXIST') return json({ ok: true, status: 'PENDING' });
+      return json({ ok: true, status: 'UNKNOWN', msg: r.msg + ' ' + (r.subMsg || '') });
+    }
+
+    // 管理端：订单列表 / 退款 / 退款查询 / 关闭交易
+    if (path === '/api/admin/payorders' && request.method === 'POST') {
+      if (!(await isAdminSession(env, request))) return json({ ok: false, msg: '请先登录后台' }, 401);
+      let cursor = '';
+      const orders = [];
+      do {
+        const page = await env.CODES.list({ prefix: 'order:', cursor: cursor });
+        for (const k of page.keys) {
+          const o = await env.CODES.get(k.name);
+          if (!o) continue;
+          try { orders.push(JSON.parse(o)); } catch (e) { /* 跳过 */ }
+        }
+        cursor = page.list_complete ? '' : page.cursor;
+      } while (cursor);
+      orders.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      const slim = orders.slice(0, 100).map((o) => ({
+        outTradeNo: o.outTradeNo, username: o.username, plan: o.plan, credits: o.credits,
+        amount: o.amount, status: o.status, createdAt: o.createdAt, paidAt: o.paidAt || '',
+        tradeNo: o.tradeNo || '',
+      }));
+      return json({ ok: true, orders: slim });
+    }
+
+    if (path === '/api/admin/payrefund' && request.method === 'POST') {
+      if (!(await isAdminSession(env, request))) return json({ ok: false, msg: '请先登录后台' }, 401);
+      const body = await readBody(request);
+      const no = normName(body.no);
+      const cfg = loadAlipayConfig(env);
+      if (!cfg.ok) return json({ ok: false, msg: '支付服务未配置' }, 503);
+      const order = await loadOrder(env, no);
+      if (!order) return json({ ok: false, msg: '订单不存在' });
+      const amount = normalizeAmountText(body.amount) || order.amount;
+      const outRequestNo = normName(body.out_request_no) || (no + 'R' + ((parseInt(order.refundSeq, 10) || 0) + 1));
+      const r = await alipayGatewayRequest(cfg, 'alipay.trade.refund', {
+        out_trade_no: no,
+        refund_amount: amount,
+        out_request_no: outRequestNo,
+        refund_reason: normName(body.reason || '管理员退款'),
+      });
+      if (r.code !== '10000') return json({ ok: false, msg: '退款失败：' + (r.subMsg || r.msg) });
+      order.refund = order.refund || [];
+      order.refund.push({ outRequestNo: outRequestNo, amount: amount, fundChange: r.fund_change || '', at: payNow() });
+      order.refundSeq = (parseInt(order.refundSeq, 10) || 0) + 1;
+      await saveOrder(env, order);
+      return json({
+        ok: r.fund_change === 'Y',
+        fundChange: r.fund_change || '',
+        msg: r.fund_change === 'Y' ? '退款成功' : '退款受理成功但资金未确认，请稍后用退款查询确认',
+        out_request_no: outRequestNo,
+      });
+    }
+
+    if (path === '/api/admin/payrefundquery' && request.method === 'POST') {
+      if (!(await isAdminSession(env, request))) return json({ ok: false, msg: '请先登录后台' }, 401);
+      const body = await readBody(request);
+      const cfg = loadAlipayConfig(env);
+      if (!cfg.ok) return json({ ok: false, msg: '支付服务未配置' }, 503);
+      const r = await alipayGatewayRequest(cfg, 'alipay.trade.fastpay.refund.query', {
+        out_trade_no: normName(body.no),
+        out_request_no: normName(body.out_request_no),
+      });
+      if (r.code !== '10000') return json({ ok: false, msg: '查询失败：' + (r.subMsg || r.msg) });
+      return json({ ok: true, refundSuccess: r.refund_status === 'REFUND_SUCCESS', refundStatus: r.refund_status || '' });
+    }
+
+    if (path === '/api/admin/payclose' && request.method === 'POST') {
+      if (!(await isAdminSession(env, request))) return json({ ok: false, msg: '请先登录后台' }, 401);
+      const body = await readBody(request);
+      const no = normName(body.no);
+      const cfg = loadAlipayConfig(env);
+      if (!cfg.ok) return json({ ok: false, msg: '支付服务未配置' }, 503);
+      const order = await loadOrder(env, no);
+      if (!order) return json({ ok: false, msg: '订单不存在' });
+      if (order.status === 'PAID') return json({ ok: false, msg: '订单已支付，不能关闭' });
+      const r = await alipayGatewayRequest(cfg, 'alipay.trade.close', { out_trade_no: no });
+      if (r.code !== '10000') return json({ ok: false, msg: '关闭失败：' + (r.subMsg || r.msg) });
+      order.status = 'CLOSED';
+      order.closedAt = payNow();
+      await saveOrder(env, order);
+      return json({ ok: true, msg: '已关闭' });
     }
 
     // ---------- 管理员 ----------
