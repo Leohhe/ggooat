@@ -6534,20 +6534,20 @@ function goToReading() {
     var buffer = '';
     var fullReading = '';
     var rawAll = '';   // 保留原始响应，流式失败时兜底解析
-    function finishReading() {
-      // 兜底1：流式没吐出内容，尝试把整体响应当普通 JSON 解析
-      if (!fullReading) {
-        try {
-          var whole = JSON.parse(String(rawAll).replace(/^\uFEFF/, '').trim());
-          var ch = whole && whole.choices && whole.choices[0];
-          var once = ch && ((ch.message && ch.message.content) || (ch.delta && ch.delta.content));
-          if (once) { textDiv.innerText = String(once); fullReading = String(once); }
-        } catch (e) { /* 忽略 */ }
-      }
-      // 兜底2：确实什么都没有，给出明确错误
-      if (!fullReading) {
-        textDiv.innerText = '解读内容为空，可能是网络波动，请返回重新占卜（次数会在云端校正后返还）。';
-      }
+    var pendingText = '';
+    var rafId = 0;
+    // 渲染节流：增量先攒起来，每帧刷一次 DOM，避免高频重排卡顿
+    function flushText() {
+      rafId = 0;
+      if (pendingText) { textDiv.innerText += pendingText; pendingText = ''; }
+    }
+    function queuePiece(p) {
+      fullReading += p;
+      pendingText += p;
+      if (!rafId && typeof requestAnimationFrame === 'function') rafId = requestAnimationFrame(flushText);
+      else if (!rafId) flushText();
+    }
+    function setCurrentReading() {
       currentReadingData = {
         question: question,
         spreadType: selectedSpreadType,
@@ -6564,6 +6564,61 @@ function goToReading() {
         }),
         reading: fullReading
       };
+    }
+    function finishReading() {
+      if (rafId) { if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(rafId); flushText(); }
+      // 兜底1：流式没吐出内容，尝试把整体响应当普通 JSON 解析
+      if (!fullReading) {
+        try {
+          var whole = JSON.parse(String(rawAll).replace(/^\uFEFF/, '').trim());
+          var ch = whole && whole.choices && whole.choices[0];
+          var once = ch && ((ch.message && ch.message.content) || (ch.delta && ch.delta.content));
+          if (once) { textDiv.innerText = String(once); fullReading = String(once); }
+        } catch (e) { /* 忽略 */ }
+      }
+      // 兜底2：确实什么都没有 → 非流式重试一次（不重复扣费）
+      if (!fullReading) { retryNonStream(); return; }
+      setCurrentReading();
+    }
+    // 非流式重试（流式解析失败/为空时兜底，只跑一次）
+    var retried = false;
+    function retryNonStream() {
+      if (retried) {
+        textDiv.innerText = '解读内容为空，可能是网络波动，请返回重新占卜（次数会在云端校正后返还）。';
+        return;
+      }
+      retried = true;
+      loadingDiv.style.display = '';
+      textDiv.innerText = '';
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + config.key
+        },
+        body: JSON.stringify({
+          model: config.model,
+          max_tokens: 4096,
+          stream: false,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      }).then(function(r2) {
+        return r2.ok ? r2.json() : Promise.reject(new Error('HTTP ' + r2.status));
+      }).then(function(j2) {
+        loadingDiv.style.display = 'none';
+        var ch2 = j2 && j2.choices && j2.choices[0];
+        var once = ch2 && ch2.message && ch2.message.content;
+        if (once) {
+          textDiv.innerText = String(once);
+          fullReading = String(once);
+          setCurrentReading();
+        } else {
+          textDiv.innerText = '解读内容为空，可能是网络波动，请返回重新占卜（次数会在云端校正后返还）。';
+        }
+      }).catch(function() {
+        loadingDiv.style.display = 'none';
+        textDiv.innerText = '解读内容为空，可能是网络波动，请返回重新占卜（次数会在云端校正后返还）。';
+      });
     }
     function readStream() {
       reader.read().then(function(result) {
@@ -6582,19 +6637,19 @@ function goToReading() {
           // 兼容 "data:" 与 "data: " 两种写法
           if (!/^data:\s?/.test(line)) continue;
           var data = line.replace(/^data:\s?/, '').trim();
-          if (!data || data === '[DONE]') {
-            if (data === '[DONE]') { finishReading(); return; }
-            continue;
-          }
+          if (!data) continue;
+          if (data === '[DONE]') { finishReading(); return; }
           try {
             var json = JSON.parse(data);
             var ch = json.choices && json.choices[0];
-            // 兼容增量 delta 与一次性 message 两种返回
-            var piece = ch && ((ch.delta && ch.delta.content) || (ch.message && ch.message.content));
-            if (piece && fullReading.indexOf(piece) === -1) {
-              // message 形式可能整段重复，去重保护
-              if (ch.message && ch.message.content) { textDiv.innerText = String(piece); fullReading = String(piece); }
-              else { textDiv.innerText += piece; fullReading += piece; }
+            if (!ch) continue;
+            if (ch.message && ch.message.content) {
+              // 一次性整段返回：直接替换全文（幂等，不怕重复）
+              textDiv.innerText = String(ch.message.content);
+              fullReading = String(ch.message.content);
+            } else if (ch.delta && ch.delta.content) {
+              // 流式增量：无条件追加（中文短增量禁止去重，否则大量丢字导致"解读显示不出来"）
+              queuePiece(String(ch.delta.content));
             }
           } catch (e) { /* 跳过非JSON行 */ }
         }
