@@ -2443,6 +2443,8 @@ body.night .popup-box{background:linear-gradient(165deg,#1a1330 0%,#150f26 100%)
 }
 .pay-plan:active{transform:scale(0.97);background:rgba(124,93,250,0.12)}
 .pay-plan-name{font-size:13px;font-weight:600;color:var(--text-dark)}
+.pay-plan-desc{font-size:11px;color:var(--text-muted);margin-top:3px}
+.pay-section-title{font-size:11px;font-weight:700;color:var(--text-muted);margin:10px 0 2px;letter-spacing:0.05em}
 .pay-plan-price{font-size:17px;font-weight:800;color:var(--divine-purple);font-family:'Cinzel',serif}
 .pay-plan-price .rmb{font-size:11px;margin-right:2px;font-weight:700}
 .pay-loading{font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0}
@@ -3221,10 +3223,10 @@ body.night .scene-label{color:var(--text-muted)}
   <!-- ========== 充值弹窗 ========== -->
   <div class="login-mask" id="payModal" onclick="if(event.target===this) closePayModal()">
     <div class="popup-box">
-      <div class="popup-title">充值次数</div>
-      <div class="popup-sub" id="payCreditLine">剩余次数：<b id="payCreditCount">0</b></div>
+      <div class="popup-title">充值中心</div>
+      <div class="popup-sub" id="payStatusLine">剩余次数：<b id="payCreditCount">0</b></div>
       <div class="pay-plans" id="payPlans"></div>
-      <div class="account-hint" style="text-align:center">支付宝安全支付 · 支付成功次数立即到账</div>
+      <div class="account-hint" style="text-align:center">支付宝安全支付 · 支付成功权益立即到账</div>
       <div class="login-tip" onclick="closePayModal()">关闭</div>
     </div>
   </div>
@@ -5062,11 +5064,8 @@ function getApiConfig() {
 // ========== 今日运势功能 ==========
 function getDailyHoroscope() {
   if (!requireLogin('请先登录后查看今日运势')) return;
+  if (!canUseNow()) return;
   var credits = getCredits();
-  if (credits <= 0) {
-    showToast('次数已用完，请前往个人中心输入兑换码兑换');
-    return;
-  }
 
   var overlay = document.getElementById('horoscopeOverlay');
   var content = document.getElementById('horoscopeContent');
@@ -5490,14 +5489,39 @@ function onNicknameClick() {
   focusNickname();
 }
 
-// 登录用户消耗 1 次（先本地扣，再云端校正）
+// 是否为有效会员（会员卡有效期内或买断）：会员使用不扣次数余额，只受每日额度限制
+function isMemberNow() {
+  return !!(authUser && authUser.membership && authUser.membership.active);
+}
+
+// 登录用户消耗 1 次（先本地扣，再云端校正；会员免费，只计每日额度）
 function spendOneCredit(current) {
-  setCredits(current - 1);
+  var memberNow = isMemberNow();
+  if (!memberNow) setCredits(current - 1);
   if (!getAuthToken()) return;
   apiFetch('/api/user/spend', {}).then(function (res) {
-    if (res && res.ok && typeof res.credits === 'number') setCredits(res.credits);
-    if (authUser) authUser.credits = res.credits;
+    if (res && res.ok) {
+      if (typeof res.credits === 'number') setCredits(res.credits);
+      if (res.membership && authUser) authUser.membership = res.membership;
+      if (authUser) authUser.dailyRemaining = res.remaining;
+    } else if (res && res.msg) {
+      // 云端拒绝（超出每日额度 / 次数不足）：回滚本地预扣并提示
+      if (!memberNow) setCredits(current);
+      if (res.membership && authUser) authUser.membership = res.membership;
+      if (authUser) authUser.dailyRemaining = res.remaining;
+      showToast(res.msg);
+    }
   }).catch(function () { /* 网络差时以本地为准，下次操作会再同步 */ });
+}
+
+// 使用前置校验：非会员需要次数余额；会员只受每日额度（服务端权威校验）
+function canUseNow() {
+  if (isMemberNow()) return true;
+  if (getCredits() <= 0) {
+    showToast('次数已用完，请充值次数包或开通会员');
+    return false;
+  }
+  return true;
 }
 
 function redeemCode() {
@@ -5821,11 +5845,88 @@ function openPayModal() {
   if (!requireLogin('请先登录后再充值')) return;
   closeDrawer();
   renderCredits();
-  var cc = document.getElementById('payCreditCount');
-  if (cc) cc.textContent = getCredits();
+  renderPayStatus();
   renderPayPlans();
   var m = document.getElementById('payModal');
   if (m) m.classList.add('open');
+}
+
+var PAY_TYPE_NAMES = { forever: '买断', month: '月卡', week: '周卡', day: '天卡' };
+
+function payMemberText() {
+  var mem = authUser && authUser.membership;
+  if (!mem) return '';
+  if (mem.active && mem.lifetime) return '会员状态：买断（永久）· 每天 ' + mem.cap + ' 次';
+  if (mem.active && mem.type) {
+    var exp = String(mem.expiry || '').slice(0, 10);
+    return '会员状态：' + (PAY_TYPE_NAMES[mem.type] || mem.type) + (exp ? ' · ' + exp + ' 到期' : '') + ' · 每天 ' + mem.cap + ' 次';
+  }
+  return '当前为普通用户 · 每天 ' + (mem.cap || 10) + ' 次';
+}
+
+function renderPayStatus() {
+  var line = document.getElementById('payStatusLine');
+  if (!line) return;
+  var cc = document.getElementById('payCreditCount');
+  if (cc) cc.textContent = getCredits();
+  var mem = authUser && authUser.membership;
+  var today = mem && typeof mem.cap === 'number'
+    ? ' ｜ 今日剩余：' + Math.max(0, (typeof authUser.dailyRemaining === 'number' ? authUser.dailyRemaining : mem.cap)) + '/' + mem.cap + ' 次'
+    : '';
+  line.innerHTML = '剩余次数：<b id="payCreditCount">' + getCredits() + '</b>' + today
+    + '<br><span style="font-size:11px;color:var(--text-muted)">' + payMemberText() + '</span>';
+}
+
+function payPlanCard(p) {
+  var desc = '';
+  if (p.type === 'card') desc = '每日 ' + p.perDay + ' 次 · 有效期 ' + p.days + ' 天';
+  else if (p.type === 'buyout') desc = '每日 ' + p.perDay + ' 次 · 永久有效';
+  else desc = '到账 ' + p.credits + ' 次次数';
+  return '<div class="pay-plan" onclick="doBuyPay(\'' + p.id + '\', this)">'
+    + '<div><div class="pay-plan-name">' + p.name + '</div>'
+    + '<div class="pay-plan-desc">' + desc + '</div></div>'
+    + '<div class="pay-plan-price"><span class="rmb">¥</span>' + p.amount + '</div>'
+    + '</div>';
+}
+
+function renderPayPlans() {
+  var wrap = document.getElementById('payPlans');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="pay-loading">加载中…</div>';
+  var render = function () {
+    var plans = PAY_PLANS_CACHE && PAY_PLANS_CACHE.enabled ? PAY_PLANS_CACHE.plans : null;
+    if (!plans) {
+      wrap.innerHTML = '<div class="pay-loading">支付服务暂未开通</div>';
+      return;
+    }
+    var packs = [], cards = [], buyout = null;
+    for (var i = 0; i < plans.length; i++) {
+      if (plans[i].type === 'pack') packs.push(plans[i]);
+      else if (plans[i].type === 'card') cards.push(plans[i]);
+      else if (plans[i].type === 'buyout') buyout = plans[i];
+    }
+    var html = '';
+    if (packs.length) {
+      html += '<div class="pay-section-title">次数包（普通用户每天限 10 次）</div>';
+      for (var j = 0; j < packs.length; j++) html += payPlanCard(packs[j]);
+    }
+    if (cards.length) {
+      html += '<div class="pay-section-title">会员卡（免扣次数 · 按天给额度）</div>';
+      for (var k = 0; k < cards.length; k++) html += payPlanCard(cards[k]);
+    }
+    if (buyout) {
+      html += '<div class="pay-section-title">买断（一次付费 · 永久使用）</div>';
+      html += payPlanCard(buyout);
+    }
+    wrap.innerHTML = html;
+  };
+  if (PAY_PLANS_CACHE) { render(); return; }
+  apiFetch('/api/pay/plans').then(function (res) {
+    PAY_PLANS_CACHE = res || {};
+    render();
+  }).catch(function () {
+    wrap.innerHTML = '<div class="pay-loading">网络异常，请稍后重试</div>';
+  });
 }
 
 function closePayModal() {
@@ -5976,11 +6077,8 @@ function uploadAvatar() {
 // ========== 进入解读界面 ==========
 function goToReading() {
   if (!requireLogin('请先登录后再开始占卜')) return;
+  if (!canUseNow()) return;
   var credits = getCredits();
-  if (credits <= 0) {
-    showToast('次数已用完，请前往个人中心输入兑换码兑换');
-    return;
-  }
 
   // 使用内置接口，每次解读消耗 1 次（登录用户云端扣减）
   var config = getApiConfig();
