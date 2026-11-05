@@ -2783,6 +2783,16 @@ body.night .magic-read-btn{
 }
 body.night .divider,
 body.night .scene-label{color:var(--text-muted)}
+/* ========== iOS Safari 专项适配（仅 iOS 生效，不影响其他平台） ========== */
+@supports (-webkit-touch-callout: none) {
+  html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+  /* iOS 10+ 忽略 user-scalable=no：输入控件聚焦时字号 ≥16px 才不会触发页面自动放大 */
+  input,textarea,select{font-size:16px !important;line-height:1.4 !important}
+  input,textarea{-webkit-appearance:none}
+  /* 弹窗在键盘弹出时可滚动，避免输入框被遮住无法滚到可视区 */
+  .login-mask{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .email-code-btn{font-size:12px !important}
+}
 </style>
 </head>
 <body>
@@ -6326,6 +6336,40 @@ function viewHistoryRecord(id) {
     }
   });
 })();
+
+/* ===== iOS Safari：键盘弹起时把打开的弹窗移入可视区（visualViewport 适配） ===== */
+  (function () {
+    var vv = window.visualViewport;
+    if (!vv) return;   // 非 iOS / 不支持时无需处理
+    var raf = null;
+    function adjust() {
+      raf = null;
+      var kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      var masks = document.querySelectorAll('.login-mask.open');
+      for (var i = 0; i < masks.length; i++) {
+        var box = masks[i].querySelector('.login-box,.popup-box');
+        if (!box) continue;
+        if (kbHeight > 80) {
+          masks[i].style.alignItems = 'flex-start';
+          var top = vv.offsetTop + Math.max(8, (vv.height - box.offsetHeight) / 2);
+          box.style.marginTop = Math.round(top) + 'px';
+        } else {
+          masks[i].style.alignItems = '';
+          box.style.marginTop = '';
+        }
+      }
+    }
+    function schedule() { if (!raf) raf = requestAnimationFrame(adjust); }
+    document.addEventListener('focusin', function (e) {
+      var t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) {
+        setTimeout(schedule, 350);
+      }
+    });
+    document.addEventListener('focusout', function () { setTimeout(schedule, 150); });
+    vv.addEventListener('resize', schedule);
+    vv.addEventListener('scroll', schedule);
+  })();
 </script>
 </body>
 </html>
