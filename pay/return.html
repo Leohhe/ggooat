@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>支付结果 · GgooAt</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#f6f2ff 0%,#efe7ff 100%);
+    font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+    padding:24px;
+  }
+  .card{
+    width:100%;max-width:360px;background:#fff;border-radius:24px;
+    padding:36px 28px;text-align:center;
+    box-shadow:0 18px 50px rgba(124,93,250,0.15);
+    border:1px solid rgba(124,93,250,0.12);
+  }
+  .icon{font-size:40px;margin-bottom:14px}
+  .title{font-size:18px;font-weight:800;color:#2d264d;letter-spacing:0.04em}
+  .desc{font-size:12.5px;color:#8a83a8;margin-top:10px;line-height:1.7}
+  .spin{
+    width:34px;height:34px;margin:18px auto 0;border-radius:50%;
+    border:3px solid rgba(124,93,250,0.15);border-top-color:#7c5dfa;
+    animation:sp 0.9s linear infinite;
+  }
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .btn{
+    display:inline-block;margin-top:22px;padding:11px 30px;border-radius:999px;
+    background:linear-gradient(135deg,#a98bff,#7c5dfa);color:#fff;font-size:13.5px;
+    font-weight:700;border:none;cursor:pointer;text-decoration:none;letter-spacing:0.05em;
+  }
+  .ok .icon{color:#2eae6f}
+  .fail .title{color:#d9534f}
+  .detail{font-size:12px;color:#6b6390;margin-top:8px}
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="icon" id="icon">⏳</div>
+    <div class="title" id="title">正在确认支付结果…</div>
+    <div class="desc" id="desc">正在通过服务端查询订单状态，请勿关闭页面</div>
+    <div class="detail" id="detail"></div>
+    <div class="spin" id="spin"></div>
+    <div id="actions" style="display:none">
+      <a class="btn" href="/">返回 GgooAt</a>
+    </div>
+  </div>
+
+<script>
+// 同步回跳参数不是支付成功的可信依据：本页只作为壳，实际状态由服务端
+// 轮询 alipay.trade.query 并以验签结果为准（见 /api/pay/status）。
+(function () {
+  var qs = new URLSearchParams(location.search);
+  var no = (qs.get('out_trade_no') || qs.get('no') || '').trim();
+  var token = '';
+  try { token = localStorage.getItem('ggooat_auth_token') || ''; } catch (e) { /* 忽略 */ }
+
+  var card = document.getElementById('card');
+  var icon = document.getElementById('icon');
+  var title = document.getElementById('title');
+  var desc = document.getElementById('desc');
+  var detail = document.getElementById('detail');
+  var spin = document.getElementById('spin');
+  var actions = document.getElementById('actions');
+  var tries = 0;
+
+  function finish(ok, msg, extra) {
+    spin.style.display = 'none';
+    actions.style.display = '';
+    card.classList.add(ok ? 'ok' : 'fail');
+    icon.textContent = ok ? '✅' : '❌';
+    title.textContent = ok ? '支付成功' : '支付未完成';
+    desc.textContent = msg || '';
+    detail.textContent = extra || '';
+  }
+
+  function poll() {
+    if (!no || !token) {
+      finish(false, '缺少订单信息或登录态，请从站内重新发起充值。');
+      return;
+    }
+    tries++;
+    fetch('https://api.ggooat.xyz/api/pay/status?no=' + encodeURIComponent(no), {
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (res && res.ok && res.status === 'PAID') {
+        finish(true, '充值的次数已到账，所有设备同步生效。',
+          '本次充值 ' + (res.plan === 'p10' ? '10 次' : res.plan === 'p50' ? '50 次' : res.plan === 'p150' ? '150 次' : '') +
+          (res.credits != null ? ' · 当前剩余 ' + res.credits + ' 次' : ''));
+        return;
+      }
+      if (res && res.ok && (res.status === 'PENDING' || res.status === 'UNKNOWN')) {
+        if (tries < 10) { setTimeout(poll, 3000); return; }
+        finish(false, '暂时未查询到支付结果。如你已完成付款，次数会在几分钟内自动到账；也可回到「我的」查看剩余次数。');
+        return;
+      }
+      finish(false, (res && res.msg) || '订单状态异常，请回到站内重新发起充值。');
+    }).catch(function () {
+      if (tries < 4) { setTimeout(poll, 3000); return; }
+      finish(false, '网络异常，无法确认支付结果。请稍后在「我的」页面查看剩余次数。');
+    });
+  }
+  poll();
+})();
+</script>
+</body>
+</html>
