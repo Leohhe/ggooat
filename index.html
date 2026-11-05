@@ -2338,85 +2338,124 @@ body{
 .profile-login-hint .hint-sub{
   font-size:10.5px;color:var(--text-muted);margin-top:6px;line-height:1.6;
 }
-/* ========== 登录弹窗 ========== */
+/* ========== 登录弹窗（粉紫渐变模板风格） ========== */
 .login-mask{
   position:absolute;inset:0;z-index:120;
-  background:rgba(24,16,48,0.55);
+  background:linear-gradient(180deg,#fdf6f3 0%,#f9eff5 55%,#f3ecfb 100%);
   display:none;align-items:center;justify-content:center;
-  padding:0 26px;
+  padding:0 22px;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 .login-mask.open{display:flex}
+body.night .login-mask{background:linear-gradient(180deg,#17102a 0%,#150e26 55%,#120c20 100%)}
 .login-box{
-  width:100%;max-width:320px;
-  background:linear-gradient(165deg,#ffffff 0%,#f8f4ff 100%);
-  border-radius:24px;padding:24px 22px 18px;
-  box-shadow:0 20px 50px rgba(40,20,90,0.28);
-  border:1.5px solid rgba(255,255,255,0.8);
-  animation:loginUp 0.3s var(--transition-bounce);
+  width:100%;max-width:330px;
+  background:linear-gradient(170deg,#fffdfc 0%,#fdf6f9 60%,#fbf5fd 100%);
+  border-radius:30px;padding:30px 24px 20px;
+  box-shadow:0 24px 60px rgba(214,120,160,0.18),0 4px 14px rgba(214,120,160,0.08);
+  border:1.5px solid rgba(240,183,208,0.55);
+  margin:auto 0;
+  animation:loginUp 0.32s var(--transition-bounce);
 }
 @keyframes loginUp{from{opacity:0;transform:translateY(14px) scale(0.97)}to{opacity:1;transform:none}}
 .login-title{
-  font-family:'Cinzel',serif;font-size:16px;font-weight:700;
-  color:var(--text-dark);text-align:center;letter-spacing:0.06em;
+  font-size:19px;font-weight:800;
+  color:#e85d8a;text-align:center;letter-spacing:0.12em;
 }
 .login-sub{
-  font-size:10.5px;color:var(--text-muted);text-align:center;
-  margin:6px 0 16px;line-height:1.5;
+  font-size:11px;color:#b99aac;text-align:center;
+  margin:7px 0 16px;line-height:1.5;
 }
-.login-field{margin-bottom:10px}
+.login-label{
+  display:block;font-size:12px;font-weight:700;color:#6b5560;
+  margin:10px 0 6px;letter-spacing:0.02em;
+}
 .login-input{
-  width:100%;height:42px;border-radius:12px;
-  border:1.5px solid rgba(124,93,250,0.22);
-  background:rgba(255,255,255,0.95);
-  padding:0 14px;font-size:13px;color:var(--text-dark);
+  width:100%;height:44px;border-radius:999px;
+  border:1.5px solid rgba(233,168,195,0.5);
+  background:rgba(255,255,255,0.92);
+  padding:0 16px;font-size:13px;color:#5a4652;
   outline:none;transition:border-color 0.25s,box-shadow 0.25s;
 }
+.login-input::placeholder{color:#c9b2bd;opacity:0.85}
 .login-input:focus{
-  border-color:var(--divine-purple);
-  box-shadow:0 0 0 3px rgba(124,93,250,0.12);
+  border-color:#ec8fb4;
+  box-shadow:0 0 0 3px rgba(236,143,180,0.15);
+  background:#fff;
 }
+.login-row{
+  display:flex;align-items:center;gap:12px;
+  margin-top:13px;flex-wrap:wrap;
+}
+.login-check{
+  display:flex;align-items:center;gap:4px;
+  font-size:11px;color:#8a7380;cursor:pointer;user-select:none;
+}
+.login-check input{width:14px;height:14px;accent-color:#ec6f9e;cursor:pointer;flex:none}
+.login-link{font-size:11.5px;font-weight:700;color:#ec6f9e;cursor:pointer;letter-spacing:0.02em}
+.login-link:active{opacity:0.7}
+.login-hint-small{font-size:10px;color:#c3aeb7;margin-top:7px}
+.login-agree{
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;color:#8a7380;margin:14px 0 2px;cursor:pointer;user-select:none;flex-wrap:wrap;
+}
+.login-agree input{width:15px;height:15px;accent-color:#ec6f9e;cursor:pointer;flex:none}
+.login-agree em{font-style:normal;font-weight:700;color:#ec6f9e;cursor:pointer}
 .login-btns{display:flex;gap:9px;margin-top:14px}
 .login-btn{
-  flex:1;height:40px;border-radius:12px;cursor:pointer;
-  font-size:13px;font-weight:600;
-  border:1.5px solid rgba(124,93,250,0.28);
-  background:rgba(255,255,255,0.9);color:var(--divine-purple);
+  flex:1;height:46px;border-radius:999px;cursor:pointer;
+  font-size:14px;font-weight:700;letter-spacing:0.15em;
+  border:1.5px solid rgba(233,168,195,0.5);
+  background:rgba(255,255,255,0.9);color:#d9648f;
   transition:all 0.25s;
+  font-family:inherit;
 }
 .login-btn.primary{
-  background:linear-gradient(135deg,#a98bff 0%,#7c5dfa 100%);
-  border:none;color:#fff;box-shadow:0 6px 16px rgba(124,93,250,0.3);
+  background:linear-gradient(135deg,#f7a8c3 0%,#ec6f9e 55%,#b98af0 100%);
+  border:none;color:#fff;letter-spacing:0.35em;text-indent:0.35em;
+  box-shadow:0 8px 20px rgba(236,111,158,0.32);
 }
 .login-btn:active{transform:scale(0.97)}
+.login-btn:disabled{opacity:0.6;pointer-events:none}
+.login-switch{
+  text-align:center;font-size:11.5px;color:#8a7380;
+  margin-top:15px;
+}
+.login-alt{text-align:center;margin-top:8px}
 .login-tip{
-  text-align:center;font-size:11px;color:var(--text-muted);
-  margin-top:14px;padding:6px;cursor:pointer;
+  text-align:center;font-size:11px;color:#b99aac;
+  margin-top:12px;padding:6px;cursor:pointer;
 }
-body.night .login-box{background:linear-gradient(165deg,#1a1330 0%,#150f26 100%);border-color:rgba(255,255,255,0.08)}
-body.night .login-input{background:rgba(255,255,255,0.06);border-color:rgba(167,139,255,0.25);color:#e8e2ff}
-body.night .login-btn{background:rgba(255,255,255,0.06);color:#c9b8ff;border-color:rgba(167,139,255,0.3)}
-/* ========== 登录页签与验证码 ========== */
-.login-tabs{
-  display:flex;margin-top:14px;
-  background:rgba(124,93,250,0.06);border-radius:12px;padding:3px;gap:3px;
-}
-.login-tab{
-  flex:1;text-align:center;padding:8px 0;font-size:11.5px;font-weight:700;
-  color:var(--text-muted);border-radius:9px;cursor:pointer;letter-spacing:0.05em;
-  transition:all 0.2s;
-}
-.login-tab.active{
-  background:#fff;color:var(--divine-purple);
-  box-shadow:0 2px 8px rgba(124,93,250,0.15);
-}
-body.night .login-tab.active{background:rgba(124,93,250,0.28);color:#d6c6ff}
-.login-field-code{display:flex;align-items:stretch;padding:0}
+body.night .login-box{background:linear-gradient(170deg,#1d1434 0%,#181030 60%,#150e28 100%);border-color:rgba(236,143,180,0.18);box-shadow:0 24px 60px rgba(0,0,0,0.4)}
+body.night .login-title{color:#f291b3}
+body.night .login-sub,body.night .login-hint-small,body.night .login-tip{color:#8d7e93}
+body.night .login-label{color:#c9b6c6}
+body.night .login-input{background:rgba(255,255,255,0.06);border-color:rgba(236,143,180,0.3);color:#f0e6f2}
+body.night .login-input::placeholder{color:#6f5f78}
+body.night .login-check,body.night .login-agree,body.night .login-switch{color:#a894a8}
+body.night .login-link,body.night .login-agree em{color:#f291b3}
+body.night .login-btn{background:rgba(255,255,255,0.06);color:#f291b3;border-color:rgba(236,143,180,0.35)}
+body.night .login-btn.primary{background:linear-gradient(135deg,#d97ba6 0%,#c05f96 55%,#8d6bd4 100%);color:#fff}
+/* 验证码行 */
+.login-field-code{display:flex;align-items:stretch;gap:8px}
 .login-field-code .login-input{margin:0}
 .email-code-btn{
-  width:auto;flex:none;padding:0 13px;font-size:11px;margin:0;
-  border-radius:0 12px 12px 0 !important;white-space:nowrap;
+  width:auto;flex:none;padding:0 16px;font-size:12px !important;margin:0;letter-spacing:0.02em;
+  border-radius:999px !important;white-space:nowrap;
 }
 .email-code-btn:disabled{opacity:0.55;pointer-events:none}
+/* 用户协议弹窗 */
+.agreement-box{max-width:330px}
+.agreement-body{
+  max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  font-size:11px;color:#8a7380;line-height:1.8;text-align:left;
+  background:rgba(255,255,255,0.6);border-radius:16px;padding:14px 16px;
+  margin:12px 0 14px;
+}
+.agreement-body p{margin-bottom:9px}
+.agreement-body b{color:#6b5560;font-size:11.5px;display:block;margin-bottom:2px}
+body.night .agreement-body{background:rgba(255,255,255,0.04);color:#a894a8}
+body.night .agreement-body b{color:#d8c6d8}
 /* ========== 通用居中弹窗盒（API设置/兑换码/改名） ========== */
 .popup-box{
   width:100%;max-width:320px;
@@ -3356,67 +3395,88 @@ body.night .scene-label{color:var(--text-muted)}
     </div>
   </div>
 
-  <!-- ========== 登录/注册弹窗（点头像打开） ========== -->
+  <!-- ========== 登录/注册弹窗（模板风格：粉紫渐变卡片） ========== -->
   <div class="login-mask" id="loginModal" onclick="if(event.target===this) closeLoginModal()">
     <div class="login-box">
-      <div class="login-title" id="loginTitle">登录 GgooAt</div>
-      <div class="login-sub">登录后可占卜 · 次数与记录云端同步</div>
 
-      <div class="login-tabs">
-        <div class="login-tab active" id="tabPass" onclick="switchLoginTab('pass')">密码登录</div>
-        <div class="login-tab" id="tabEmail" onclick="switchLoginTab('email')">邮箱验证码</div>
+      <!-- 登录视图 -->
+      <div id="authLoginView">
+        <div class="login-title">欢迎回来</div>
+        <div class="login-sub">登录后可占卜 · 次数与记录云端同步</div>
+        <label class="login-label" for="authUser">用户名或邮箱</label>
+        <input type="text" id="authUser" class="login-input" placeholder="请输入用户名或邮箱" maxlength="48" autocomplete="username">
+        <label class="login-label" for="authPass">密码</label>
+        <input type="password" id="authPass" class="login-input" placeholder="请输入密码" maxlength="32" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter') doLogin()">
+        <div class="login-row">
+          <label class="login-check"><input type="checkbox" id="rememberChk" checked><span>记住登录</span></label>
+          <label class="login-check"><input type="checkbox" id="autoLoginChk" checked onchange="saveAutoLoginPref()"><span>自动登录</span></label>
+          <span class="login-link" onclick="forgotPassword()">忘记密码?</span>
+        </div>
+        <div class="login-hint-small">长期未使用可能需要重新登录</div>
+        <label class="login-agree"><input type="checkbox" id="agreeChk"><span>我已阅读并同意</span><em onclick="event.preventDefault();openAgreement()">《用户协议》</em></label>
+        <button class="login-btn primary" id="authSubmit" onclick="doLogin()">登 录</button>
+        <div class="login-switch">还没有账号？ <span class="login-link" onclick="switchAuthView('reg')">免费注册</span></div>
+        <div class="login-alt"><span class="login-link" onclick="switchAuthView('code')">验证码免密登录</span></div>
       </div>
 
-      <div id="panePass">
-        <div class="login-field">
-          <input type="text" id="authUser" class="login-input" placeholder="用户名或邮箱" maxlength="48" autocomplete="username">
+      <!-- 注册视图 -->
+      <div id="authRegView" style="display:none">
+        <div class="login-title">创建账号</div>
+        <div class="login-sub">填写信息立即开始使用</div>
+        <label class="login-label" for="regEmail">邮箱</label>
+        <input type="email" id="regEmail" class="login-input" placeholder="请输入 qq 邮箱" maxlength="48" autocomplete="email">
+        <label class="login-label" for="regEmailCode">邮箱验证码</label>
+        <div class="login-field-code">
+          <input type="text" id="regEmailCode" class="login-input" placeholder="请输入 6 位字母数字验证码" maxlength="8" inputmode="numeric" style="flex:1;min-width:0">
+          <button class="login-btn email-code-btn" id="emailCodeBtn" onclick="sendEmailCode('reg')">获取验证码</button>
         </div>
-        <div class="login-field">
-          <input type="password" id="authPass" class="login-input" placeholder="密码（6-32位）" maxlength="32" autocomplete="current-password"
-                 onkeydown="if(event.key==='Enter') doLogin()">
-        </div>
-        <div class="login-btns">
-          <button class="login-btn primary" id="authSubmit" onclick="doLogin()">登录</button>
-        </div>
-        <div class="account-hint" style="text-align:center">还没有账号？切换「邮箱验证码」注册</div>
+        <label class="login-label" for="regUsername">用户名</label>
+        <input type="text" id="regUsername" class="login-input" placeholder="起个名字吧" maxlength="16">
+        <label class="login-label" for="regPass1">密码</label>
+        <input type="password" id="regPass1" class="login-input" placeholder="请输入密码（6-32位）" maxlength="32" autocomplete="new-password">
+        <label class="login-label" for="regPass2">确认密码</label>
+        <input type="password" id="regPass2" class="login-input" placeholder="请再次输入密码" maxlength="32" autocomplete="new-password">
+        <label class="login-agree"><input type="checkbox" id="agreeChkReg"><span>我已阅读并同意</span><em onclick="event.preventDefault();openAgreement()">《用户协议》</em></label>
+        <button class="login-btn primary" id="regSubmit" onclick="doRegister()">注册并领取</button>
+        <div class="login-switch">已有账号？ <span class="login-link" onclick="switchAuthView('login')">去登录</span></div>
       </div>
 
-      <div id="paneEmail" style="display:none">
-        <div id="emailStep1">
-          <div class="login-field">
-            <input type="email" id="emailLoginUser" class="login-input" placeholder="邮箱地址（QQ/163/Gmail 均可）" maxlength="48" autocomplete="email">
-          </div>
-          <div class="login-field login-field-code">
-            <input type="text" id="emailLoginCode" class="login-input" placeholder="8位验证码" maxlength="8" inputmode="numeric"
-                   style="flex:1;border-radius:12px 0 0 12px;border-right:none" onkeydown="if(event.key==='Enter') doEmailLogin()">
-            <button class="login-btn email-code-btn" id="emailCodeBtn" onclick="sendEmailCode()">获取验证码</button>
-          </div>
-          <div class="login-btns">
-            <button class="login-btn primary" id="emailSubmit" onclick="doEmailLogin()">下一步</button>
-          </div>
-          <div class="account-hint" style="text-align:center">验证邮箱后设置用户名和密码完成注册</div>
+      <!-- 免密登录视图（邮箱验证码） -->
+      <div id="authCodeView" style="display:none">
+        <div class="login-title">免密登录</div>
+        <div class="login-sub">无需密码 · 验证码直达，忘记密码也能登录</div>
+        <label class="login-label" for="codeEmail">邮箱</label>
+        <input type="email" id="codeEmail" class="login-input" placeholder="请输入注册时使用的邮箱" maxlength="48" autocomplete="email">
+        <label class="login-label" for="codeEmailCode">邮箱验证码</label>
+        <div class="login-field-code">
+          <input type="text" id="codeEmailCode" class="login-input" placeholder="请输入邮箱收到的验证码" maxlength="8" inputmode="numeric" style="flex:1;min-width:0"
+                 onkeydown="if(event.key==='Enter') doCodeLogin()">
+          <button class="login-btn email-code-btn" id="codeCodeBtn" onclick="sendEmailCode('code')">获取验证码</button>
         </div>
-        <div id="emailStep2" style="display:none">
-          <div class="account-hint" style="text-align:center;margin-bottom:10px">
-            邮箱验证成功：<b id="regEmailShow"></b>　<span style="color:var(--divine-purple);cursor:pointer;text-decoration:underline" onclick="regBack()">重新验证</span>
-          </div>
-          <div class="login-field">
-            <input type="text" id="regUsername" class="login-input" placeholder="用户名（2-16位，不可重复）" maxlength="16">
-          </div>
-          <div class="login-field">
-            <input type="password" id="regPass1" class="login-input" placeholder="密码（6-32位）" maxlength="32">
-          </div>
-          <div class="login-field">
-            <input type="password" id="regPass2" class="login-input" placeholder="确认密码" maxlength="32"
-                   onkeydown="if(event.key==='Enter') doEmailRegister()">
-          </div>
-          <div class="login-btns">
-            <button class="login-btn primary" id="regSubmit" onclick="doEmailRegister()">完成注册</button>
-          </div>
-        </div>
+        <label class="login-agree"><input type="checkbox" id="agreeChkCode"><span>我已阅读并同意</span><em onclick="event.preventDefault();openAgreement()">《用户协议》</em></label>
+        <button class="login-btn primary" id="codeSubmit" onclick="doCodeLogin()">登 录</button>
+        <div class="login-switch">还没有账号？ <span class="login-link" onclick="switchAuthView('reg')">免费注册</span></div>
+        <div class="login-alt"><span class="login-link" onclick="switchAuthView('login')">返回密码登录</span></div>
       </div>
 
       <div class="login-tip" onclick="closeLoginModal()">稍后再说</div>
+    </div>
+  </div>
+
+  <!-- 用户协议弹窗 -->
+  <div class="login-mask" id="agreementModal" onclick="if(event.target===this) closeAgreement()">
+    <div class="login-box agreement-box">
+      <div class="login-title">用户协议</div>
+      <div class="agreement-body">
+        <p><b>1. 账号安全</b>　请妥善保管账号与密码，因保管不善造成的损失由用户自行承担。长期未使用的账号可能需要重新登录。</p>
+        <p><b>2. 次数与会员</b>　充值次数包/会员卡/买断为虚拟商品，支付成功后即时到账，到账结果以服务端记录为准。会员每日额度当日有效，不结转。</p>
+        <p><b>3. 退款规则</b>　虚拟商品一经使用原则上不予退款；未使用的订单可联系管理员协商处理。</p>
+        <p><b>4. 合理使用</b>　禁止通过技术手段刷取次数、绕过每日额度或破坏服务；违规账号将被限制或封禁。</p>
+        <p><b>5. 内容声明</b>　占卜与解读内容仅供娱乐与自我探索参考，不构成医疗、法律、投资等任何专业建议。</p>
+        <p><b>6. 隐私保护</b>　仅收集运行为必需的信息（账号、邮箱、使用记录），不向第三方出售。</p>
+      </div>
+      <button class="login-btn primary" onclick="agreeAndClose()">同意并继续</button>
     </div>
   </div>
 </div>
@@ -5160,7 +5220,31 @@ var adminLogsCache = null;
 var adminUsersCache = [];
 
 function getAuthToken() {
-  try { return localStorage.getItem(AUTH_TOKEN_KEY) || ''; } catch (e) { return ''; }
+  try { return localStorage.getItem(AUTH_TOKEN_KEY) || sessionStorage.getItem(AUTH_TOKEN_KEY) || ''; } catch (e) { return ''; }
+}
+
+// 按登录弹窗的「记住登录」勾选保存 token（勾=localStorage 持久，不勾=会话级）
+function saveAuthToken(token) {
+  var remember = true;
+  try { var chk = document.getElementById('rememberChk'); if (chk) remember = chk.checked; } catch (e) { /* 忽略 */ }
+  try {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    if (remember) localStorage.setItem(AUTH_TOKEN_KEY, token);
+    else sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+  } catch (e) {
+    try { localStorage.setItem(AUTH_TOKEN_KEY, token); } catch (e2) { /* 忽略 */ }
+  }
+}
+
+function autoLoginEnabled() {
+  try { return localStorage.getItem('ggooat_autologin') !== '0'; } catch (e) { return true; }
+}
+function saveAutoLoginPref() {
+  try {
+    var chk = document.getElementById('autoLoginChk');
+    localStorage.setItem('ggooat_autologin', chk && chk.checked ? '1' : '0');
+  } catch (e) { /* 忽略 */ }
 }
 
 // 统一请求封装（8 秒超时；自动带登录态）
@@ -5228,38 +5312,58 @@ function applyProfileToUI() {
   }
 }
 
-function doRegister() {
-  var u = document.getElementById('authUser').value.trim();
-  var p = document.getElementById('authPass').value;
-  if (!u || !p) { showToast('请输入账号和密码'); return; }
-  var btn = document.getElementById('authSubmit');
-  btn.disabled = true; btn.textContent = '注册中…';
-  apiFetch('/api/auth/register', { username: u, password: p }).then(function (res) {
-    btn.disabled = false; btn.textContent = '注册并登录';
-    if (res && res.ok) {
-      try { localStorage.setItem(AUTH_TOKEN_KEY, res.token); } catch (e) { /* 忽略 */ }
-      saveAuthUser(res.profile);
-      setCredits(res.profile.credits);
-      applyProfileToUI();
-      closeLoginModal();
-      document.getElementById('authPass').value = '';
-      showToast('注册成功！欢迎 ' + res.profile.username);
-    } else {
-      showToast((res && res.msg) || '注册失败');
-    }
-  }).catch(function () { btn.disabled = false; btn.textContent = '注册并登录'; showToast('网络异常，请稍后重试'); });
+/* ===== 弹窗三视图切换：login / reg / code ===== */
+function switchAuthView(v) {
+  var views = { login: 'authLoginView', reg: 'authRegView', code: 'authCodeView' };
+  for (var k in views) {
+    var el = document.getElementById(views[k]);
+    if (el) el.style.display = (k === v) ? '' : 'none';
+  }
+  if (v === 'login') setTimeout(function () { var el = document.getElementById('authUser'); if (el) el.focus(); }, 100);
+  if (v === 'reg') setTimeout(function () { var el = document.getElementById('regEmail'); if (el) el.focus(); }, 100);
+  if (v === 'code') setTimeout(function () { var el = document.getElementById('codeEmail'); if (el) el.focus(); }, 100);
+}
+
+function openAgreement() {
+  var m = document.getElementById('agreementModal');
+  if (m) m.classList.add('open');
+}
+function closeAgreement() {
+  var m = document.getElementById('agreementModal');
+  if (m) m.classList.remove('open');
+}
+function agreeAndClose() {
+  ['agreeChk', 'agreeChkReg', 'agreeChkCode'].forEach(function (id) {
+    var c = document.getElementById(id); if (c) c.checked = true;
+  });
+  closeAgreement();
+  showToast('已同意《用户协议》');
+}
+
+function forgotPassword() {
+  switchAuthView('code');
+  showToast('无需密码：用邮箱验证码即可免密登录');
+}
+
+// 协议勾选校验（当前视图对应勾选框）
+function agreeChecked(view) {
+  var map = { login: 'agreeChk', reg: 'agreeChkReg', code: 'agreeChkCode' };
+  var c = document.getElementById(map[view] || 'agreeChk');
+  return !!(c && c.checked);
 }
 
 function doLogin() {
   var u = document.getElementById('authUser').value.trim();
   var p = document.getElementById('authPass').value;
   if (!u || !p) { showToast('请输入账号和密码'); return; }
+  if (!agreeChecked('login')) { showToast('请先阅读并同意《用户协议》'); return; }
   var btn = document.getElementById('authSubmit');
   btn.disabled = true; btn.textContent = '登录中…';
   apiFetch('/api/auth/login', { username: u, password: p }).then(function (res) {
-    btn.disabled = false; btn.textContent = '登录';
+    btn.disabled = false; btn.textContent = '登 录';
     if (res && res.ok) {
-      try { localStorage.setItem(AUTH_TOKEN_KEY, res.token); } catch (e) { /* 忽略 */ }
+      saveAuthToken(res.token);
+      saveAutoLoginPref();
       saveAuthUser(res.profile);
       setCredits(res.profile.credits);
       applyProfileToUI();
@@ -5269,7 +5373,7 @@ function doLogin() {
     } else {
       showToast((res && res.msg) || '登录失败');
     }
-  }).catch(function () { btn.disabled = false; btn.textContent = '登录'; showToast('网络异常，请稍后重试'); });
+  }).catch(function () { btn.disabled = false; btn.textContent = '登 录'; showToast('网络异常，请稍后重试'); });
 }
 
 /* ===== 邮箱验证码登录（Supabase OTP） ===== */
@@ -5277,24 +5381,12 @@ var SUPABASE_URL = 'https://ayphnsufnrdytdtnyabg.supabase.co';
 var SUPABASE_KEY = 'sb_publishable_5t9ClVJ77GBDAXjJobcHcw_gsPl2Fxp';
 var emailCodeTimer = null;
 
-function switchLoginTab(t) {
-  var tp = document.getElementById('panePass'), te = document.getElementById('paneEmail');
-  var tabP = document.getElementById('tabPass'), tabE = document.getElementById('tabEmail');
-  if (!tp || !te) return;
-  if (t === 'email') {
-    tp.style.display = 'none'; te.style.display = '';
-    tabE.classList.add('active'); tabP.classList.remove('active');
-    setTimeout(function () { var el = document.getElementById('emailLoginUser'); if (el) el.focus(); }, 100);
-  } else {
-    tp.style.display = ''; te.style.display = 'none';
-    tabP.classList.add('active'); tabE.classList.remove('active');
-  }
-}
-
-function sendEmailCode() {
-  var email = (document.getElementById('emailLoginUser').value || '').trim();
+function sendEmailCode(view) {
+  var inputId = view === 'code' ? 'codeEmail' : 'regEmail';
+  var btnId = view === 'code' ? 'codeCodeBtn' : 'emailCodeBtn';
+  var email = (document.getElementById(inputId).value || '').trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showToast('请输入正确的邮箱地址'); return; }
-  var btn = document.getElementById('emailCodeBtn');
+  var btn = document.getElementById(btnId);
   btn.disabled = true; btn.textContent = '发送中…';
   fetch(SUPABASE_URL + '/auth/v1/otp', {
     method: 'POST',
@@ -5322,21 +5414,11 @@ function sendEmailCode() {
   }).catch(function () { btn.disabled = false; btn.textContent = '获取验证码'; showToast('网络异常，请稍后重试'); });
 }
 
-function doEmailLogin() {
-  var email = (document.getElementById('emailLoginUser').value || '').trim();
-  var code = (document.getElementById('emailLoginCode').value || '').trim();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showToast('请输入正确的邮箱地址'); return; }
-  if (!code) { showToast('请输入邮箱收到的验证码'); return; }
-  var btn = document.getElementById('emailSubmit');
-  btn.disabled = true; btn.textContent = '验证中…';
-  // 依次尝试 OTP / 魔法链接 / 注册 三种票据类型，兼容 Supabase 不同模板
+// Supabase OTP 验证（依次尝试 OTP / 魔法链接 / 注册三种票据类型）
+function verifyOtp(email, code, onOk, onFail) {
   var types = ['email', 'magiclink', 'signup'];
   function tryVerify(i) {
-    if (i >= types.length) {
-      btn.disabled = false; btn.textContent = '登录 / 注册';
-      showToast('验证码错误或已过期，请重新获取');
-      return;
-    }
+    if (i >= types.length) { onFail(); return; }
     fetch(SUPABASE_URL + '/auth/v1/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
@@ -5344,76 +5426,119 @@ function doEmailLogin() {
     }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d }; });
     }).then(function (res) {
-      if (res.ok && res.d && res.d.access_token) {
-        return apiFetch('/api/auth/email-login', { access_token: res.d.access_token }).then(function (backend) {
-          btn.disabled = false; btn.textContent = '下一步';
-          if (backend && backend.ok) {
-            try { localStorage.setItem(AUTH_TOKEN_KEY, backend.token); } catch (e) { /* 忽略 */ }
-            saveAuthUser(backend.profile);
-            setCredits(backend.profile.credits);
-            applyProfileToUI();
-            closeLoginModal();
-            showToast(backend.msg || '登录成功');
-          } else if (backend && backend.pending) {
-            // 新邮箱：进入设置用户名/密码步骤
-            window._pendingReg = backend.pending_token;
-            var es = document.getElementById('regEmailShow');
-            if (es) es.textContent = backend.email;
-            document.getElementById('emailStep1').style.display = 'none';
-            document.getElementById('emailStep2').style.display = '';
-            showToast('邮箱验证成功，请设置用户名和密码');
-            setTimeout(function () { var el = document.getElementById('regUsername'); if (el) el.focus(); }, 100);
-          } else {
-            showToast((backend && backend.msg) || '登录失败，请稍后重试');
-          }
-        });
-      }
+      if (res.ok && res.d && res.d.access_token) { onOk(res.d.access_token); return; }
       tryVerify(i + 1);
-    }).catch(function () {
-      btn.disabled = false; btn.textContent = '登录 / 注册';
-      showToast('网络异常，请稍后重试');
-    });
+    }).catch(onFail);
   }
   tryVerify(0);
 }
 
-function regBack() {
-  window._pendingReg = null;
-  var s2 = document.getElementById('emailStep2'), s1 = document.getElementById('emailStep1');
-  if (s2) s2.style.display = 'none';
-  if (s1) s1.style.display = '';
+// 登录成功统一收口
+function finishAuth(res, welcome) {
+  saveAuthToken(res.token);
+  saveAutoLoginPref();
+  saveAuthUser(res.profile);
+  setCredits(res.profile.credits);
+  applyProfileToUI();
+  closeLoginModal();
+  showToast(welcome);
 }
 
-function doEmailRegister() {
-  if (!window._pendingReg) { showToast('请先完成邮箱验证'); return; }
+// 免密登录视图
+function doCodeLogin() {
+  var email = (document.getElementById('codeEmail').value || '').trim();
+  var code = (document.getElementById('codeEmailCode').value || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showToast('请输入正确的邮箱地址'); return; }
+  if (!code) { showToast('请输入邮箱收到的验证码'); return; }
+  if (!agreeChecked('code')) { showToast('请先阅读并同意《用户协议》'); return; }
+  var btn = document.getElementById('codeSubmit');
+  btn.disabled = true; btn.textContent = '验证中…';
+  verifyOtp(email, code, function (accessToken) {
+    apiFetch('/api/auth/email-login', { access_token: accessToken }).then(function (backend) {
+      btn.disabled = false; btn.textContent = '登 录';
+      if (backend && backend.ok) {
+        finishAuth(backend, backend.msg || '欢迎回来，' + backend.profile.username);
+      } else if (backend && backend.pending) {
+        // 新邮箱：切到注册视图，沿用已验证票据，补用户名/密码
+        window._pendingReg = backend.pending_token;
+        var re = document.getElementById('regEmail');
+        if (re) { re.value = email; re.readOnly = true; }
+        var rc = document.getElementById('regEmailCode');
+        if (rc) { rc.value = code; rc.readOnly = true; }
+        var rb = document.getElementById('emailCodeBtn');
+        if (rb) { rb.disabled = true; rb.textContent = '已验证'; }
+        switchAuthView('reg');
+        showToast('邮箱验证成功，请设置用户名和密码');
+        setTimeout(function () { var el = document.getElementById('regUsername'); if (el) el.focus(); }, 100);
+      } else {
+        showToast((backend && backend.msg) || '登录失败，请稍后重试');
+      }
+    }).catch(function () { btn.disabled = false; btn.textContent = '登 录'; showToast('网络异常，请稍后重试'); });
+  }, function () {
+    btn.disabled = false; btn.textContent = '登 录';
+    showToast('验证码错误或已过期，请重新获取');
+  });
+}
+
+// 注册视图：验证码校验 → 已有账号直接登录 / 新账号完成注册（单页整合）
+function doRegister() {
+  var email = (document.getElementById('regEmail').value || '').trim();
+  var code = (document.getElementById('regEmailCode').value || '').trim();
   var un = (document.getElementById('regUsername').value || '').trim();
   var p1 = document.getElementById('regPass1').value;
   var p2 = document.getElementById('regPass2').value;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showToast('请输入正确的邮箱地址'); return; }
+  if (!code) { showToast('请先获取并填写邮箱验证码'); return; }
+  if (!agreeChecked('reg')) { showToast('请先阅读并同意《用户协议》'); return; }
   if (!/^[a-zA-Z0-9_\u4e00-\u9fa5]{2,16}$/.test(un)) { showToast('用户名需 2-16 位，中英文/数字/下划线'); return; }
   if (p1.length < 6 || p1.length > 32) { showToast('密码需 6-32 位'); return; }
   if (p1 !== p2) { showToast('两次输入的密码不一致'); return; }
   var btn = document.getElementById('regSubmit');
-  btn.disabled = true; btn.textContent = '注册中…';
-  apiFetch('/api/auth/email-register', { pending_token: window._pendingReg, username: un, password: p1 }).then(function (res) {
-    btn.disabled = false; btn.textContent = '完成注册';
-    if (res && res.ok) {
-      window._pendingReg = null;
-      try { localStorage.setItem(AUTH_TOKEN_KEY, res.token); } catch (e) { /* 忽略 */ }
-      saveAuthUser(res.profile);
-      setCredits(res.profile.credits);
-      applyProfileToUI();
-      closeLoginModal();
-      showToast(res.msg || '注册成功');
-    } else {
-      showToast((res && res.msg) || '注册失败');
-    }
-  }).catch(function () { btn.disabled = false; btn.textContent = '完成注册'; showToast('网络异常，请稍后重试'); });
+  btn.disabled = true; btn.textContent = '验证中…';
+  verifyOtp(email, code, function (accessToken) {
+    apiFetch('/api/auth/email-login', { access_token: accessToken }).then(function (backend) {
+      if (backend && backend.ok) {
+        // 邮箱已注册：直接登录
+        btn.disabled = false; btn.textContent = '注册并领取';
+        finishAuth(backend, '该邮箱已注册，已直接登录');
+        return;
+      }
+      if (backend && backend.pending) {
+        window._pendingReg = backend.pending_token;
+        apiFetch('/api/auth/email-register', { pending_token: window._pendingReg, username: un, password: p1 }).then(function (res) {
+          btn.disabled = false; btn.textContent = '注册并领取';
+          if (res && res.ok) {
+            window._pendingReg = null;
+            unlockRegInputs();
+            finishAuth(res, res.msg || '注册成功！欢迎 ' + res.profile.username);
+          } else {
+            showToast((res && res.msg) || '注册失败');
+          }
+        }).catch(function () { btn.disabled = false; btn.textContent = '注册并领取'; showToast('网络异常，请稍后重试'); });
+        return;
+      }
+      btn.disabled = false; btn.textContent = '注册并领取';
+      showToast((backend && backend.msg) || '验证失败，请稍后重试');
+    }).catch(function () { btn.disabled = false; btn.textContent = '注册并领取'; showToast('网络异常，请稍后重试'); });
+  }, function () {
+    btn.disabled = false; btn.textContent = '注册并领取';
+    showToast('验证码错误或已过期，请重新获取');
+  });
+}
+
+function unlockRegInputs() {
+  var re = document.getElementById('regEmail');
+  var rc = document.getElementById('regEmailCode');
+  var rb = document.getElementById('emailCodeBtn');
+  if (re) { re.readOnly = false; re.value = ''; }
+  if (rc) { rc.readOnly = false; rc.value = ''; }
+  if (rb) { rb.disabled = false; rb.textContent = '获取验证码'; }
 }
 
 function doLogout() {
   var token = getAuthToken();
   if (token) apiFetch('/api/auth/logout', { token: token });
-  try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) { /* 忽略 */ }
+  try { localStorage.removeItem(AUTH_TOKEN_KEY); sessionStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) { /* 忽略 */ }
   saveAuthUser(null);
   renderAccount();
   showToast('已退出登录（本地数据保留）');
@@ -5433,8 +5558,13 @@ function syncProfileToCloud() {
   }).catch(function () { /* 静默失败 */ });
 }
 
-// 启动时恢复登录态
-function restoreSession() {
+// 启动时恢复登录态（尊重「自动登录」开关；关闭时打开弹窗才恢复）
+function restoreSession(force) {
+  if (!force && !autoLoginEnabled()) {
+    saveAuthUser(null);
+    renderAccount();
+    return;
+  }
   if (!getAuthToken()) { renderAccount(); return; }
   apiFetch('/api/user/me').then(function (res) {
     if (res && res.ok) {
@@ -5443,7 +5573,7 @@ function restoreSession() {
       applyProfileToUI();
     } else {
       // 会话过期
-      try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) { /* 忽略 */ }
+      try { localStorage.removeItem(AUTH_TOKEN_KEY); sessionStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) { /* 忽略 */ }
       saveAuthUser(null);
       renderAccount();
     }
@@ -5473,6 +5603,14 @@ function renderAccount() {
 function openLoginModal() {
   var m = document.getElementById('loginModal');
   if (!m) return;
+  closeDrawer();
+  // 自动登录关闭时：打开弹窗视为用户主动操作，恢复一次会话
+  if (!authUser && getAuthToken() && !autoLoginEnabled()) {
+    restoreSession(true);
+  }
+  // 恢复「自动登录」勾选状态
+  try { var a = document.getElementById('autoLoginChk'); if (a) a.checked = autoLoginEnabled(); } catch (e) { /* 忽略 */ }
+  switchAuthView('login');
   m.classList.add('open');
   setTimeout(function () {
     var u = document.getElementById('authUser');
