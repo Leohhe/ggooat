@@ -1,0 +1,16 @@
+{
+  "name": "ggooat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GgooAt 塔罗占卜站：静态前端 + Cloudflare Worker 后端（账号/次数/记录 + 支付能力）",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy backend/worker.js"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.0"
+  },
+  "dependencies": {
+    "alipay-sdk": "^4.14.0"
+  }
+}
