@@ -88,9 +88,20 @@
       headers: { 'Authorization': 'Bearer ' + token }
     }).then(function (r) { return r.json(); }).then(function (res) {
       if (res && res.ok && res.status === 'PAID') {
-        finish(true, '充值的次数已到账，所有设备同步生效。',
-          '本次充值 ' + (res.plan === 'p10' ? '10 次' : res.plan === 'p50' ? '50 次' : res.plan === 'p150' ? '150 次' : '') +
-          (res.credits != null ? ' · 当前剩余 ' + res.credits + ' 次' : ''));
+        var memNames = { day: '天卡', week: '周卡', month: '月卡', forever: '买断' };
+        var msg = '', extra = '';
+        var mem = res.membership;
+        if (mem && mem.active && mem.lifetime) {
+          msg = '买断已开通，所有设备同步生效。';
+          extra = '每天最多使用 50 次 · 永久有效';
+        } else if (mem && mem.active && mem.type) {
+          msg = (memNames[mem.type] || '会员') + '已开通，所有设备同步生效。';
+          extra = '每天最多使用 ' + mem.cap + ' 次 · ' + String(mem.expiry || '').slice(0, 10) + ' 到期';
+        } else {
+          msg = '充值的次数已到账，所有设备同步生效。';
+          extra = '本次到账 ' + (res.credits != null ? res.credits : '') + ' 次次数';
+        }
+        finish(true, msg, extra);
         return;
       }
       if (res && res.ok && (res.status === 'PENDING' || res.status === 'UNKNOWN')) {
