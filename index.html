@@ -2564,6 +2564,34 @@ body.night .side-drawer{
   border-left-color:rgba(255,255,255,0.08);
 }
 body.night .drawer-item{background:rgba(255,255,255,0.05);border-color:rgba(167,139,255,0.18);color:#e8e2ff}
+/* ========== 卡密分组折叠 ========== */
+.card-group{
+  border:1px solid rgba(124,93,250,0.16);
+  border-radius:14px;
+  margin-bottom:8px;
+  overflow:hidden;
+  background:rgba(255,255,255,0.55);
+}
+.card-group-head{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 12px;
+  cursor:pointer;
+  user-select:none;
+  font-size:13px;font-weight:700;
+  color:var(--text-main);
+  transition:background 0.2s;
+}
+.card-group-head:hover,.card-group-head.open{background:rgba(124,93,250,0.07)}
+.card-group-arrow{color:var(--divine-purple);font-size:11px;width:10px;flex:0 0 auto}
+.card-group-name{flex:0 0 auto}
+.card-group-meta{flex:1;font-size:11px;font-weight:400;color:var(--text-muted)}
+.card-group-body{padding:0 8px 8px}
+.card-used-more{
+  padding:8px 6px;font-size:11px;color:var(--text-muted);
+  cursor:pointer;text-align:center;
+}
+body.night .card-group{background:rgba(255,255,255,0.04);border-color:rgba(167,139,255,0.18)}
+body.night .card-group-head:hover,body.night .card-group-head.open{background:rgba(167,139,255,0.09)}
 /* ========== 兑换码管理后台 ========== */
 .admin-screen{
   position:absolute;inset:0;border-radius:48px;
@@ -5815,40 +5843,91 @@ function renderAdminCards() {
     el.innerHTML = '<div class="admin-empty">暂无卡密，请在上方生成</div>';
     return;
   }
-  var html = cards.slice().reverse().map(function (c) {
-    return '<div class="admin-code-item">' +
-      '<div class="admin-code-main">' +
-        '<div class="admin-code-name" style="font-family:monospace;letter-spacing:0.02em">' + c.code + '</div>' +
-        '<div class="admin-code-meta">' + (CARD_PLAN_NAMES[c.plan] || c.plan) +
-        (c.note ? ' · ' + c.note : '') + ' · ' + (c.createdAt || '') + '</div>' +
+  // 按档位分组 {plan: {live:[], used:[]}}
+  var groups = {};
+  var order = ['p2', 'p13', 'p25', 'day', 'week', 'month', 'forever'];
+  cards.forEach(function (c) { (groups[c.plan] = groups[c.plan] || { live: [], used: [] }).live.push(c); });
+  used.forEach(function (c) { (groups[c.plan] = groups[c.plan] || { live: [], used: [] }).used.push(c); });
+  // 展开状态记忆
+  var expanded = {};
+  try { JSON.parse(localStorage.getItem('ggooat_cards_expand') || '[]').forEach(function (p) { expanded[p] = 1; }); } catch (e) { /* 忽略 */ }
+  var plans = order.filter(function (k) { return groups[k]; })
+    .concat(Object.keys(groups).filter(function (k) { return order.indexOf(k) < 0; }));
+  var html = '';
+  plans.forEach(function (plan) {
+    var g = groups[plan];
+    var name = CARD_PLAN_NAMES[plan] || plan;
+    var isOpen = !!expanded[plan];
+    html += '<div class="card-group" data-plan="' + plan + '">' +
+      '<div class="card-group-head' + (isOpen ? ' open' : '') + '" onclick="toggleCardGroup(\'' + plan + '\')">' +
+        '<span class="card-group-arrow">' + (isOpen ? '▾' : '▸') + '</span>' +
+        '<span class="card-group-name">' + name + '</span>' +
+        '<span class="card-group-meta">未用 ' + g.live.length + (g.used.length ? ' · 已用 ' + g.used.length : '') + '</span>' +
+        (g.live.length ? '<button class="admin-icon-btn" type="button" onclick="event.stopPropagation();copyAllCards(\'' + plan + '\')">全部复制</button>' : '') +
       '</div>' +
-      '<div class="admin-code-actions">' +
-        '<span style="font-size:10px;color:#3a9d5f;font-weight:700">未用</span>' +
-        '<button class="admin-icon-btn" type="button" title="复制">复制</button>' +
-        '<button class="admin-icon-btn danger" type="button" title="删除">删除</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-  html += used.slice(-30).reverse().map(function (c) {
-    return '<div class="admin-code-item" style="opacity:0.55">' +
-      '<div class="admin-code-main">' +
-        '<div class="admin-code-name" style="font-family:monospace;text-decoration:line-through">' + c.code + '</div>' +
-        '<div class="admin-code-meta">' + (CARD_PLAN_NAMES[c.plan] || c.plan) + ' · 已被 ' + c.username + ' 于 ' + (c.usedAt || '') + ' 兑换</div>' +
-      '</div>' +
-      '<div class="admin-code-actions"><span style="font-size:10px;color:#b06a6a;font-weight:700">已用</span></div>' +
-    '</div>';
-  }).join('');
+      '<div class="card-group-body" style="display:' + (isOpen ? '' : 'none') + '">';
+    g.live.slice().reverse().forEach(function (c) { html += cardItemHtml(c, false); });
+    // 已用默认只显示最近 5 条
+    g.used.slice(-5).reverse().forEach(function (c) { html += cardItemHtml(c, true); });
+    if (g.used.length > 5) {
+      html += '<div class="card-used-more" onclick="var n=this.nextElementSibling;n.style.display=\'\';this.remove()">已用仅显示最近 5 条，点击显示全部 ' + g.used.length + ' 条 ▾</div><div style="display:none">';
+      g.used.slice(0, -5).reverse().forEach(function (c) { html += cardItemHtml(c, true); });
+      html += '</div>';
+    }
+    html += '</div></div>';
+  });
   el.innerHTML = html;
-  // 绑定按钮（未用卡密）
-  var live = cards.slice().reverse();
-  var items = el.querySelectorAll('.admin-code-item');
-  for (var i = 0; i < live.length && i < items.length; i++) {
-    (function (card, item) {
-      var btns = item.querySelectorAll('.admin-icon-btn');
-      if (btns[0]) btns[0].onclick = function () { copyCardCode(card.code); };
-      if (btns[1]) btns[1].onclick = function () { deleteAdminCard(card.code); };
-    })(live[i], items[i]);
+}
+
+function cardItemHtml(c, isUsed) {
+  var main = '<div class="admin-code-main">' +
+    '<div class="admin-code-name" style="font-family:monospace;letter-spacing:0.02em' + (isUsed ? ';text-decoration:line-through' : '') + '">' + c.code + '</div>' +
+    '<div class="admin-code-meta">' +
+      (isUsed
+        ? '已被 ' + c.username + ' 于 ' + (c.usedAt || '') + ' 兑换'
+        : (c.note ? c.note + ' · ' : '') + (c.createdAt || '')) +
+    '</div>' +
+  '</div>';
+  var actions = isUsed
+    ? '<div class="admin-code-actions"><span style="font-size:10px;color:#b06a6a;font-weight:700">已用</span></div>'
+    : '<div class="admin-code-actions">' +
+        '<button class="admin-icon-btn" type="button" onclick="copyCardCode(\'' + c.code + '\')">复制</button>' +
+        '<button class="admin-icon-btn danger" type="button" onclick="deleteAdminCard(\'' + c.code + '\')">删除</button>' +
+      '</div>';
+  return '<div class="admin-code-item"' + (isUsed ? ' style="opacity:0.55"' : '') + '>' + main + actions + '</div>';
+}
+
+function toggleCardGroup(plan) {
+  var expanded = [];
+  try { expanded = JSON.parse(localStorage.getItem('ggooat_cards_expand') || '[]'); } catch (e) { expanded = []; }
+  var i = expanded.indexOf(plan);
+  if (i >= 0) expanded.splice(i, 1); else expanded.push(plan);
+  try { localStorage.setItem('ggooat_cards_expand', JSON.stringify(expanded)); } catch (e) { /* 忽略 */ }
+  var group = document.querySelector('.card-group[data-plan="' + plan + '"]');
+  if (!group) return;
+  var head = group.querySelector('.card-group-head');
+  var body = group.querySelector('.card-group-body');
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  head.classList.toggle('open', !open);
+  head.querySelector('.card-group-arrow').textContent = open ? '▸' : '▾';
+}
+
+function copyAllCards(plan) {
+  var codes = (adminCardsCache || []).filter(function (c) { return c.plan === plan; }).map(function (c) { return c.code; });
+  if (!codes.length) return;
+  var text = codes.join('\n');
+  function fallback() {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      showToast('已复制 ' + codes.length + ' 张卡密');
+    } catch (e) { showToast('复制失败，请手动复制'); }
   }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { showToast('已复制 ' + codes.length + ' 张卡密'); }, fallback);
+  } else fallback();
 }
 
 function copyCardCode(code) {
@@ -5879,6 +5958,11 @@ function genAdminCards() {
       var hint = document.getElementById('cardGenHint');
       if (box) { box.style.display = ''; box.value = (res.codes || []).join('\n'); }
       if (hint) hint.style.display = '';
+      // 自动展开新生成的档位分组
+      try {
+        var ex = JSON.parse(localStorage.getItem('ggooat_cards_expand') || '[]');
+        if (ex.indexOf(plan) < 0) { ex.push(plan); localStorage.setItem('ggooat_cards_expand', JSON.stringify(ex)); }
+      } catch (e) { /* 忽略 */ }
       showToast(res.msg || '生成成功');
       loadAdminCards();
     } else {
