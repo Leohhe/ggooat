@@ -1,0 +1,17 @@
+{
+  // GgooAt 后端 Worker（支付宝收款 + 账号/次数/记录）
+  "name": "ggooat-api",
+  "main": "backend/worker.js",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "kv_namespaces": [
+    { "binding": "CODES", "id": "c817ba6c68b14a84b0fcdb4623a5812f" }
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://ayphnsufnrdytdtnyabg.supabase.co",
+    "SUPABASE_ANON_KEY": "sb_publishable_5t9ClVJ77GBDAXjJobcHcw_gsPl2Fxp"
+  }
+  // 支付宝配置（ALIPAY_APP_ID / ALIPAY_APP_PRIVATE_KEY / ALIPAY_ALIPAY_PUBLIC_KEY /
+  // ALIPAY_GATEWAY / ALIPAY_NOTIFY_URL / ALIPAY_SELLER_ID / ALIPAY_KEY_TYPE）
+  // 在产品开通完成后通过 `npx wrangler secret put` 或 vars 配置，未配置时支付功能明确禁用。
+}
