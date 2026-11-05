@@ -5941,34 +5941,6 @@ function closePayModal() {
   if (m) m.classList.remove('open');
 }
 
-function renderPayPlans() {
-  var wrap = document.getElementById('payPlans');
-  if (!wrap) return;
-  wrap.innerHTML = '<div class="pay-loading">加载中…</div>';
-  var render = function () {
-    var plans = PAY_PLANS_CACHE && PAY_PLANS_CACHE.enabled ? PAY_PLANS_CACHE.plans : null;
-    if (!plans) {
-      wrap.innerHTML = '<div class="pay-loading">支付服务暂未开通</div>';
-      return;
-    }
-    var html = '';
-    for (var i = 0; i < plans.length; i++) {
-      html += '<div class="pay-plan" onclick="doBuyPay(\'' + plans[i].id + '\', this)">'
-        + '<div class="pay-plan-name">' + plans[i].name + '</div>'
-        + '<div class="pay-plan-price"><span class="rmb">¥</span>' + plans[i].amount + '</div>'
-        + '</div>';
-    }
-    wrap.innerHTML = html;
-  };
-  if (PAY_PLANS_CACHE) { render(); return; }
-  apiFetch('/api/pay/plans').then(function (res) {
-    PAY_PLANS_CACHE = res || {};
-    render();
-  }).catch(function () {
-    wrap.innerHTML = '<div class="pay-loading">网络异常，请稍后重试</div>';
-  });
-}
-
 // 支付表单必须渲染到页面并自动提交（返回的是 HTML form，不是 URL，禁止 location.href 直跳）
 function doBuyPay(planId, el) {
   if (!requireLogin('请先登录后再充值')) return;
