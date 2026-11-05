@@ -2433,6 +2433,21 @@ body.night .login-tab.active{background:rgba(124,93,250,0.28);color:#d6c6ff}
 }
 .popup-sub{font-size:10.5px;color:var(--text-muted);text-align:center;margin-top:5px}
 body.night .popup-box{background:linear-gradient(165deg,#1a1330 0%,#150f26 100%);border-color:rgba(255,255,255,0.08)}
+/* ========== 充值档位 ========== */
+.pay-plans{margin-top:14px;display:flex;flex-direction:column;gap:9px}
+.pay-plan{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;border-radius:14px;cursor:pointer;
+  background:rgba(124,93,250,0.05);border:1.5px solid rgba(124,93,250,0.15);
+  transition:all 0.22s;
+}
+.pay-plan:active{transform:scale(0.97);background:rgba(124,93,250,0.12)}
+.pay-plan-name{font-size:13px;font-weight:600;color:var(--text-dark)}
+.pay-plan-price{font-size:17px;font-weight:800;color:var(--divine-purple);font-family:'Cinzel',serif}
+.pay-plan-price .rmb{font-size:11px;margin-right:2px;font-weight:700}
+.pay-loading{font-size:12px;color:var(--text-muted);text-align:center;padding:16px 0}
+body.night .pay-plan{background:rgba(255,255,255,0.05);border-color:rgba(167,139,255,0.2)}
+body.night .pay-plan-name{color:#e8e2ff}
 /* ========== 右侧个人抽屉（宽 = 屏幕的 1/3.5） ========== */
 .drawer-mask{
   position:absolute;inset:0;z-index:110;
@@ -3173,6 +3188,12 @@ body.night .scene-label{color:var(--text-muted)}
       </div>
 
       <div class="drawer-menu">
+        <div class="drawer-item" onclick="openPayModal()">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+          <span>充值次数</span>
+        </div>
         <div class="drawer-item" onclick="openRedeemModal()">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M12 2l2.4 4.86 5.36.78-3.88 3.78.92 5.34L12 14.24l-4.8 2.52.92-5.34-3.88-3.78 5.36-.78L12 2z"/>
@@ -3196,6 +3217,20 @@ body.night .scene-label{color:var(--text-muted)}
       <div class="drawer-foot">GgooAt · 塔罗</div>
     </div>
   </div>
+
+  <!-- ========== 充值弹窗 ========== -->
+  <div class="login-mask" id="payModal" onclick="if(event.target===this) closePayModal()">
+    <div class="popup-box">
+      <div class="popup-title">充值次数</div>
+      <div class="popup-sub" id="payCreditLine">剩余次数：<b id="payCreditCount">0</b></div>
+      <div class="pay-plans" id="payPlans"></div>
+      <div class="account-hint" style="text-align:center">支付宝安全支付 · 支付成功次数立即到账</div>
+      <div class="login-tip" onclick="closePayModal()">关闭</div>
+    </div>
+  </div>
+
+  <!-- 支付表单渲染容器（跳转支付宝用） -->
+  <div id="payFormContainer" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#fff;display:none"></div>
 
   <!-- ========== 兑换码弹窗 ========== -->
   <div class="login-mask" id="redeemModal" onclick="if(event.target===this) closeRedeemModal()">
@@ -3750,6 +3785,7 @@ function closeAllScreens() {
   closeDrawer();
   closeRedeemModal();
   closeRenameModal();
+  closePayModal();
   // 历史
   document.getElementById('historyScreen').classList.remove('open');
   // 兑换码后台
@@ -5776,6 +5812,74 @@ function openDrawer() {
 function closeDrawer() {
   var m = document.getElementById('drawerMask');
   if (m) m.classList.remove('open');
+}
+
+/* ===== 充值（支付宝网页支付） ===== */
+var PAY_PLANS_CACHE = null;
+
+function openPayModal() {
+  if (!requireLogin('请先登录后再充值')) return;
+  closeDrawer();
+  renderCredits();
+  var cc = document.getElementById('payCreditCount');
+  if (cc) cc.textContent = getCredits();
+  renderPayPlans();
+  var m = document.getElementById('payModal');
+  if (m) m.classList.add('open');
+}
+
+function closePayModal() {
+  var m = document.getElementById('payModal');
+  if (m) m.classList.remove('open');
+}
+
+function renderPayPlans() {
+  var wrap = document.getElementById('payPlans');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="pay-loading">加载中…</div>';
+  var render = function () {
+    var plans = PAY_PLANS_CACHE && PAY_PLANS_CACHE.enabled ? PAY_PLANS_CACHE.plans : null;
+    if (!plans) {
+      wrap.innerHTML = '<div class="pay-loading">支付服务暂未开通</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < plans.length; i++) {
+      html += '<div class="pay-plan" onclick="doBuyPay(\'' + plans[i].id + '\', this)">'
+        + '<div class="pay-plan-name">' + plans[i].name + '</div>'
+        + '<div class="pay-plan-price"><span class="rmb">¥</span>' + plans[i].amount + '</div>'
+        + '</div>';
+    }
+    wrap.innerHTML = html;
+  };
+  if (PAY_PLANS_CACHE) { render(); return; }
+  apiFetch('/api/pay/plans').then(function (res) {
+    PAY_PLANS_CACHE = res || {};
+    render();
+  }).catch(function () {
+    wrap.innerHTML = '<div class="pay-loading">网络异常，请稍后重试</div>';
+  });
+}
+
+// 支付表单必须渲染到页面并自动提交（返回的是 HTML form，不是 URL，禁止 location.href 直跳）
+function doBuyPay(planId, el) {
+  if (!requireLogin('请先登录后再充值')) return;
+  if (el) { el.style.pointerEvents = 'none'; el.style.opacity = '0.55'; }
+  apiFetch('/api/pay/create', { plan: planId }).then(function (res) {
+    if (el) { el.style.pointerEvents = ''; el.style.opacity = ''; }
+    if (res && res.ok && res.paymentHtml) {
+      var container = document.getElementById('payFormContainer');
+      container.innerHTML = res.paymentHtml;
+      container.style.display = 'block';
+      var form = container.querySelector('form');
+      if (form) form.submit();
+    } else {
+      showToast((res && res.msg) || '创建订单失败，请稍后重试');
+    }
+  }).catch(function () {
+    if (el) { el.style.pointerEvents = ''; el.style.opacity = ''; }
+    showToast('网络异常，请稍后重试');
+  });
 }
 
 function openRedeemModal() {
