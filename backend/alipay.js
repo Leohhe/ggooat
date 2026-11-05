@@ -5,15 +5,13 @@
 // （需要 Node 原生 socket），在 Cloudflare Workers 运行时不可用。
 // 本模块按官方 SDK 同等算法实现：
 //   · 请求签名：参数按 key 升序拼接 k=v&（排除 sign，保留 sign_type），
-//     RSA-SHA256 + PKCS#1 私钥（node:crypto，与 SDK 一样仅在调用侧包装 PEM，
-//     不改动原始密钥值、不做格式转换）
+//     RSA-SHA256（WebCrypto RSASSA-PKCS1-v1_5；PKCS#1 私钥在调用侧包装为
+//     PKCS#8 DER，不改动原始密钥值、不做格式转换）
 //   · 异步通知验签：与 SDK checkNotifySignV2 一致（含 sign_type / 不含 sign_type
 //     双次尝试）
 //   · 网关调用：全局 fetch POST 表单，响应验签（除 sign/sign_type 外字段）
 // 配置全部来自环境变量，未配置时功能明确禁用，无任何 Mock / 固定成功 / 跳过验签旁路。
 // ============================================================
-
-import { createSign, createVerify } from 'node:crypto';
 
 const SANDBOX_GATEWAY = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do';
 
@@ -40,21 +38,41 @@ export function loadAlipayConfig(env) {
   return { ok: true, appId, privateKey, alipayPublicKey, gateway, notifyUrl, sellerId, keyType };
 }
 
-// 原始密钥 → 调用侧 PEM 包装（不修改密钥内容，仅添加标准头尾；与 SDK formatKey 行为一致）
-function wrapPem(raw, keyType) {
-  if (/-----BEGIN/.test(raw)) return raw;   // 已是 PEM 则原样使用
-  const clean = raw.replace(/\s+/g, '');
-  const body = clean.match(/.{1,64}/g).join('\n');
-  const label = keyType === 'PKCS8' ? 'PRIVATE KEY' : 'RSA PRIVATE KEY';
-  return '-----BEGIN ' + label + '-----\n' + body + '\n-----END ' + label + '-----';
+// ---- 签名/验签：WebCrypto（Workers 原生支持；node:crypto createSign 在 Workers 不可用） ----
+// PKCS#1 原始私钥在调用侧包装为 PKCS#8 DER（不改密钥内容）；支付宝公钥为 SPKI DER
+function base64ToBytes(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
 }
-
-function wrapPublicPem(raw) {
-  if (/-----BEGIN/.test(raw)) return raw;
-  const clean = raw.replace(/\s+/g, '');
-  const body = clean.match(/.{1,64}/g).join('\n');
-  return '-----BEGIN PUBLIC KEY-----\n' + body + '\n-----END PUBLIC KEY-----';
+function bytesToBase64(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
 }
+function concatBytes() {
+  let total = 0;
+  for (const a of arguments) total += a.length;
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const a of arguments) { out.set(a, off); off += a.length; }
+  return out;
+}
+function derLenBytes(n) {
+  if (n < 128) return [n];
+  if (n < 256) return [0x81, n];
+  return [0x82, (n >> 8) & 0xff, n & 0xff];
+}
+function pkcs1ToPkcs8(pkcs1) {
+  const version = Uint8Array.of(0x02, 0x01, 0x00);
+  const algId = Uint8Array.of(0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00);
+  const octet = Uint8Array.of(0x04, ...derLenBytes(pkcs1.length));
+  const inner = concatBytes(version, algId, octet, pkcs1);
+  return concatBytes(Uint8Array.of(0x30, ...derLenBytes(inner.length)), inner);
+}
+const RSA_IMPORT = { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' };
+const RSA_SIGN = { name: 'RSASSA-PKCS1-v1_5' };
 
 // 参与签名的内容：key 升序，k=v& 连接；exclude 集合内的字段不参与
 function buildSignContent(params, exclude) {
@@ -65,16 +83,18 @@ function buildSignContent(params, exclude) {
 }
 
 async function signRSA2(content, privateKey, keyType) {
-  const signer = createSign('RSA-SHA256');
-  signer.update(content, 'utf8');
-  return signer.sign(wrapPem(privateKey, keyType), 'base64');
+  const raw = base64ToBytes(String(privateKey).replace(/\s+/g, ''));
+  const pkcs8 = keyType === 'PKCS8' ? raw : pkcs1ToPkcs8(raw);
+  const key = await crypto.subtle.importKey('pkcs8', pkcs8, RSA_IMPORT, false, ['sign']);
+  const sig = await crypto.subtle.sign(RSA_SIGN, key, new TextEncoder().encode(content));
+  return bytesToBase64(new Uint8Array(sig));
 }
 
-export function verifyRSA2(content, signBase64, alipayPublicKey, keyType) {
+export async function verifyRSA2(content, signBase64, alipayPublicKey, keyType) {
   try {
-    const verifier = createVerify('RSA-SHA256');
-    verifier.update(content, 'utf8');
-    return verifier.verify(wrapPublicPem(alipayPublicKey), String(signBase64), 'base64');
+    const spki = base64ToBytes(String(alipayPublicKey).replace(/\s+/g, ''));
+    const key = await crypto.subtle.importKey('spki', spki, RSA_IMPORT, false, ['verify']);
+    return await crypto.subtle.verify(RSA_SIGN, key, base64ToBytes(String(signBase64)), new TextEncoder().encode(content));
   } catch (e) {
     return false;
   }
@@ -82,17 +102,17 @@ export function verifyRSA2(content, signBase64, alipayPublicKey, keyType) {
 
 // ---- 异步通知验签（与 SDK checkNotifySignV2 语义一致） ----
 // params：通知的完整表单字段 map（验签前不丢字段、不改名、不改值）
-export function verifyNotifySign(params, alipayPublicKey) {
+export async function verifyNotifySign(params, alipayPublicKey) {
   const sign = params.sign;
   if (!sign) return false;
   const withType = buildSignContent(params, new Set(['sign']));
-  if (verifyRSA2(withType, sign, alipayPublicKey)) return true;
+  if (await verifyRSA2(withType, sign, alipayPublicKey)) return true;
   const withoutType = buildSignContent(params, new Set(['sign', 'sign_type']));
   return verifyRSA2(withoutType, sign, alipayPublicKey);
 }
 
 // ---- 网关响应验签（响应字段扁平，除 sign/sign_type 外全部参与） ----
-export function verifyResponseSign(data, alipayPublicKey) {
+export async function verifyResponseSign(data, alipayPublicKey) {
   if (!data || !data.sign || !alipayPublicKey) return null;   // 无签名时由调用方用查询兜底
   const normalized = {};
   for (const k of Object.keys(data)) {
@@ -100,9 +120,9 @@ export function verifyResponseSign(data, alipayPublicKey) {
     normalized[k] = (v !== null && typeof v === 'object') ? JSON.stringify(v) : String(v);
   }
   const withType = buildSignContent(normalized, new Set(['sign']));
-  if (verifyRSA2(withType, data.sign, alipayPublicKey)) return true;
+  if (await verifyRSA2(withType, data.sign, alipayPublicKey)) return true;
   const withoutType = buildSignContent(normalized, new Set(['sign', 'sign_type']));
-  return verifyRSA2(withoutType, data.sign, alipayPublicKey);
+  return await verifyRSA2(withoutType, data.sign, alipayPublicKey);
 }
 
 function toFormBody(params) {
@@ -117,13 +137,38 @@ async function parseGatewayResponse(response) {
   const raw = await response.text();
   const text = String(raw).replace(/^\uFEFF/, '').trim();
   try {
-    return JSON.parse(text);
+    return { data: JSON.parse(text), text: text };
   } catch (e) {
     // 网关偶发返回 HTML 错误页，不能当作业务成功
     const err = new Error('支付宝网关返回非 JSON 内容（HTTP ' + response.status + '）');
     err.raw = text.slice(0, 200);
     throw err;
   }
+}
+
+// 从网关响应原文中提取 "<method>_response" 键对应的原始 JSON 字符串（响应验签依据）
+function extractRawJson(text, key) {
+  const marker = '"' + key + '":';
+  const i = text.indexOf(marker);
+  if (i < 0) return null;
+  const start = text.indexOf('"', i + marker.length);
+  if (start < 0) return null;
+  let j = start + 1;
+  while (j < text.length) {
+    if (text[j] === '\\') { j += 2; continue; }
+    if (text[j] === '"') break;
+    j++;
+  }
+  return text.slice(start, j + 1);
+}
+
+// ---- 网关响应验签：对 <method>_response 的 JSON 内容验证外层 sign ----
+// 优先用 JSON.parse 后重序列化文本（实测网关签名基准），失败回退响应原文子串（抗转义差异）
+export async function verifyResponseRaw(biz, rawJsonText, sign, alipayPublicKey) {
+  if (!biz || !sign || !alipayPublicKey) return null;
+  if (await verifyRSA2(JSON.stringify(biz), sign, alipayPublicKey)) return true;
+  if (rawJsonText) return verifyRSA2(rawJsonText, sign, alipayPublicKey);
+  return false;
 }
 
 // ---- 服务端交易接口（查询 / 退款 / 退款查询 / 关闭）：exec 等价实现 ----
@@ -150,13 +195,17 @@ export async function alipayGatewayRequest(config, method, bizContent) {
     },
     body: toFormBody(params),
   });
-  const data = await parseGatewayResponse(response);
+  const { data: envelope, text: rawText } = await parseGatewayResponse(response);
+  // 响应为 { "<method>.response": {...}, sign } 嵌套结构；兼容扁平结构
+  const respKey = Object.keys(envelope).find((k) => k.endsWith('_response'));
+  const data = respKey ? envelope[respKey] : envelope;
+  const verifyText = respKey ? extractRawJson(rawText, respKey) : null;
   const result = {
     code: String(data.code || ''),
     msg: String(data.msg || ''),
     subCode: data.sub_code || '',
     subMsg: data.sub_msg || '',
-    _verify: verifyResponseSign(data, config.alipayPublicKey),
+    _verify: respKey ? await verifyResponseRaw(data, verifyText, envelope.sign, config.alipayPublicKey) : null,
   };
   for (const k of Object.keys(data)) {
     if (!(k in result) && k !== 'sign' && k !== 'sign_type') result[k] = data[k];
