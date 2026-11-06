@@ -166,11 +166,14 @@ body{
   .screen,.settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{border-radius:0}
   /* ===== iPhone 16 / 16 Pro（402×874）等灵动岛机型安全区适配 ===== */
   .header{padding-top:calc(16px + env(safe-area-inset-top, 0px))}
-  .screen{padding-top:calc(52px + env(safe-area-inset-top, 0px));padding-bottom:calc(32px + env(safe-area-inset-bottom, 0px))}
+  .screen{padding-top:calc(52px + env(safe-area-inset-top, 0px));padding-bottom:calc(96px + env(safe-area-inset-bottom, 0px))}
   .settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{
     padding-top:calc(52px + env(safe-area-inset-top, 0px));
-    padding-bottom:calc(32px + env(safe-area-inset-bottom, 0px));
+    padding-bottom:calc(96px + env(safe-area-inset-bottom, 0px));
   }
+  /* 底部悬浮导航高 54px + 离底 12px：内容区必须预留足够空间，否则按钮被导航条遮挡 */
+  /* 选牌轮盘按视口高度动态定位，保证牌堆顶缘始终在选牌槽下方（原 -473px 是按 874px 视口写死的） */
+  .wheel-area-bottom{bottom:calc(100dvh - 1457px)}
   .cards-cluster{transform:scale(0.85)}
   .cards-cluster:hover{transform:scale(0.87)translateY(-3px)}
   .card-pos1{left:calc(50% - 140px)}.card-pos2{left:calc(50% - 75px)}.card-pos3{left:50%}.card-pos4{left:calc(50% + 75px)}.card-pos5{left:calc(50% + 140px)}
@@ -6748,8 +6751,8 @@ function viewHistoryRecord(id) {
   applyTheme(savedTheme);
   // 恢复账号登录态（拉取云端次数/昵称/历史）
   restoreSession();
-  // 兑换码后台唯一入口：https://ggooat.xyz/admin/ （或 #admin）
-  if (location.hash === '#admin') setTimeout(openAdmin, 300);
+  // 兑换码后台唯一入口：https://ggooat.xyz/admin/12345 （或 #admin）
+  if (location.hash === '#admin/12345') setTimeout(openAdmin, 300);
   // 初始化 iOS 26 导航指示器
   initNavIndicator();
   // 窗口大小变化时重新定位指示器
