@@ -1710,16 +1710,32 @@ body{
   40%{transform:scale(1);opacity:1}
 }
 
-/* ========== 搜索界面 ========== */
+/* ========== 搜索界面（图册）========== */
+/* 全屏图册：z-index 70 盖住底部导航栏（60），底部留白缩小；左上角返回按钮负责退出 */
 .search-screen{
   position:absolute;inset:0;border-radius:48px;
   background:linear-gradient(160deg, #fbfbfe 0%, #f5f0ff 60%, #ede6ff 100%);
-  z-index:15;
+  z-index:70;
   display:none;flex-direction:column;
-  padding:52px 24px 96px;
+  padding:52px 24px 28px;
   overflow:hidden;
   -webkit-overflow-scrolling:touch;
 }
+.search-back{
+  position:absolute;top:50px;left:18px;
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  border:1px solid rgba(124,93,250,0.18);
+  background:rgba(255,255,255,0.7);
+  color:var(--text-dark);
+  cursor:pointer;
+  z-index:5;
+  transition:all 0.3s;
+  -webkit-tap-highlight-color:transparent;
+}
+.search-back:hover{background:rgba(124,93,250,0.12)}
+.search-back:active{transform:scale(0.9)}
 .search-screen.open{
   display:flex;
 }
@@ -3166,8 +3182,13 @@ body.night .scene-label{color:var(--text-muted)}
     </div>
   </div>
 
-  <!-- ========== 搜索界面 ========== -->
+  <!-- ========== 搜索界面（全屏图册，含返回按钮）========== -->
   <div class="search-screen" id="searchScreen">
+    <button class="search-back" onclick="closeSearch()" aria-label="返回">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
     <div class="settings-title" id="searchTitle">塔罗百科</div>
     <div class="settings-sub" id="searchSub">SEARCH ALL 78 CARDS</div>
     <div class="search-mode-tabs">
