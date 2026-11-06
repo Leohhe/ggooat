@@ -198,7 +198,7 @@ body{
   .spread-opt,.placement-slot,.icon-btn,.glass-panel{
     backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
   }
-  /* 底栏液态玻璃是核心视觉，手机上保留（单条 blur 开销可控） */
+  /* 底栏毛玻璃是核心质感，手机上保留（单条 blur 开销可控）；其余大面积毛玻璃仍禁用 */
   .focus-overlay::before{
     backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
     background:rgba(29,20,57,0.62);
@@ -565,12 +565,8 @@ body{
   text-align:center;line-height:1.3;
 }
 
-/* ========== 底部导航栏 - iOS 26 Liquid Glass 液态玻璃还原 ==========
-   还原要点（对应 Apple HIG Liquid Glass）：
-   1. 背景折射：backdrop-filter blur+saturate；Chromium 端额外叠加 SVG 位移滤镜实现真折射（见 body.glass-svg）
-   2. 边缘环形高光：::before 用 mask 挖出 1.6px 渐变描边环（左上/右下亮），叠加 inset 蓝橙色散
-   3. 体积感：内部漫反射 + 顶部 1px 镜面高光 + 微观噪点（真玻璃表面不平整）
-   4. 按压果冻弹性：navClick 触发 WAAPI spring 挤压动画 */
+/* ========== 底部导航栏 - iOS 18 风格毛玻璃悬浮长条 ==========
+   特征：大半径模糊 + 高饱和提亮、柔和半透明底、顶部细镜面高光、柔和大投影，无折射/色散 */
 .nav-bar{
   position:absolute;
   bottom:20px;
@@ -580,47 +576,32 @@ body{
   max-width:320px;
   height:58px;
   border-radius:29px;
-  border:1px solid rgba(255,255,255,0.28);
-  background:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='5'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.035 0'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>"),
-    linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 100%);
-  backdrop-filter:blur(22px) saturate(200%) brightness(1.06);
-  -webkit-backdrop-filter:blur(22px) saturate(200%) brightness(1.06);
+  border:1px solid rgba(255,255,255,0.45);
+  background:rgba(255,255,255,0.34);
+  backdrop-filter:blur(38px) saturate(180%);
+  -webkit-backdrop-filter:blur(38px) saturate(180%);
   display:flex;align-items:center;justify-content:space-around;
   padding:5px;
   box-shadow:
-    /* 外部投影：玻璃悬浮感 */
-    0 18px 44px rgba(31,18,63,0.22),
-    0 4px 14px rgba(31,18,63,0.12),
-    /* 边缘折射色散：左缘偏冷、右缘偏暖（真玻璃边缘的光分离） */
-    inset 1.5px 0 1px rgba(168,200,255,0.28),
-    inset -1.5px 0 1px rgba(255,214,190,0.22),
-    /* 顶部镜面高光 + 底部反光 */
-    inset 0 1.5px 0.5px rgba(255,255,255,0.72),
-    inset 0 -1px 0.5px rgba(255,255,255,0.3),
-    /* 内部漫反射：光在玻璃体内散射 */
-    inset 0 0 24px rgba(255,255,255,0.1);
+    0 12px 36px rgba(31,18,63,0.16),
+    0 2px 8px rgba(31,18,63,0.08),
+    inset 0 1px 0.5px rgba(255,255,255,0.75),
+    inset 0 -1px 0.5px rgba(255,255,255,0.22);
   transition:all 0.5s var(--transition-bounce);
   overflow:visible;
   --nav-active-left:0px;
   --nav-active-width:0px;
 }
-/* 边缘环形高光：mask 挖空中心，只留 1.6px 渐变玻璃壁（Liquid Glass 标志性特征） */
 .nav-bar::before{
   content:'';
-  position:absolute;inset:0;border-radius:29px;padding:1.6px;
-  background:linear-gradient(120deg,
-    rgba(255,255,255,0.95) 0%,
-    rgba(255,255,255,0.2) 26%,
-    rgba(255,255,255,0.06) 50%,
-    rgba(255,255,255,0.22) 72%,
-    rgba(255,255,255,0.85) 100%);
-  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite:exclude;
+  position:absolute;inset:0;border-radius:29px;
+  background:linear-gradient(180deg,
+    rgba(255,255,255,0.38) 0%,
+    rgba(255,255,255,0.1) 35%,
+    rgba(124,93,250,0.04) 60%,
+    rgba(255,255,255,0.14) 100%);
   pointer-events:none;
-  z-index:1;
+  z-index:0;
 }
 .nav-bar::after{
   content:'';
@@ -628,22 +609,12 @@ body{
   top:-60%;left:-60%;
   width:220%;height:220%;
   background:
-    radial-gradient(ellipse at 35% 25%, rgba(168,137,255,0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 65% 75%, rgba(223,183,108,0.08) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 40%, rgba(255,255,255,0.15) 0%, transparent 40%);
-  animation:liquid-shift-ios26 7s ease-in-out infinite alternate;
+    radial-gradient(ellipse at 35% 25%, rgba(168,137,255,0.1) 0%, transparent 45%),
+    radial-gradient(ellipse at 65% 75%, rgba(255,255,255,0.12) 0%, transparent 45%);
+  animation:liquid-shift-ios26 8s ease-in-out infinite alternate;
   pointer-events:none;
   z-index:0;
   filter:blur(2px);
-}
-/* 真折射模式（JS 检测 Chromium 后启用）：位移滤镜扭曲底栏透出的背景 */
-body.glass-svg .nav-bar{
-  backdrop-filter:blur(6px) saturate(190%) brightness(1.05) url(#liquidGlassDistort);
-  -webkit-backdrop-filter:blur(10px) saturate(190%) brightness(1.05);
-}
-/* 按压时整条玻璃果冻挤压（配合 JS WAAPI spring） */
-.nav-bar.jelly{
-  transition:none;
 }
 @keyframes liquid-shift-ios26{
   0%{transform:translate(0,0) rotate(0deg) scale(1)}
@@ -2786,26 +2757,18 @@ body.night .admin-screen{
   background:linear-gradient(160deg,#141029 0%,#171233 55%,#110d22 100%);
 }
 body.night .nav-bar{
-  border-color:rgba(255,255,255,0.14);
-  background:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='5'/><feColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>"),
-    linear-gradient(180deg, rgba(36,28,66,0.42) 0%, rgba(24,18,46,0.5) 100%);
+  background:rgba(28,22,52,0.5);
+  border-color:rgba(255,255,255,0.12);
   box-shadow:
-    0 18px 44px rgba(0,0,0,0.55),
-    0 4px 14px rgba(0,0,0,0.3),
-    inset 1.5px 0 1px rgba(140,170,255,0.2),
-    inset -1.5px 0 1px rgba(255,200,180,0.14),
-    inset 0 1.5px 0.5px rgba(255,255,255,0.42),
-    inset 0 -1px 0.5px rgba(255,255,255,0.16),
-    inset 0 0 24px rgba(167,139,255,0.08);
+    0 12px 36px rgba(0,0,0,0.45),
+    0 2px 8px rgba(0,0,0,0.28),
+    inset 0 1px 0.5px rgba(255,255,255,0.18);
 }
 body.night .nav-bar::before{
-  background:linear-gradient(120deg,
-    rgba(255,255,255,0.6) 0%,
-    rgba(255,255,255,0.12) 26%,
-    rgba(255,255,255,0.04) 50%,
-    rgba(255,255,255,0.14) 72%,
-    rgba(255,255,255,0.5) 100%);
+  background:linear-gradient(180deg,
+    rgba(255,255,255,0.08) 0%,
+    rgba(255,255,255,0.02) 40%,
+    rgba(167,139,255,0.05) 100%);
 }
 body.night .settings-input,
 body.night .redeem-input,
@@ -2906,15 +2869,6 @@ body.night .scene-label{color:var(--text-muted)}
 </style>
 </head>
 <body>
-<!-- Liquid Glass 真折射滤镜：feTurbulence 生成平滑噪声场 → feDisplacementMap 扭曲背景采样
-     仅 Chromium 系（Chrome/Edge/安卓）支持 backdrop-filter 引用 SVG 滤镜，由 JS 加 body.glass-svg 启用 -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="liquidGlassDistort" x="-15%" y="-15%" width="130%" height="130%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.007 0.012" numOctaves="2" seed="9" result="n"/>
-    <feGaussianBlur in="n" stdDeviation="1.4" result="nb"/>
-    <feDisplacementMap in="SourceGraphic" in2="nb" scale="42" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-</svg>
 <div class="bg-canvas"></div>
 <div class="bg-rays"></div>
 <div class="bg-glow"></div>
@@ -4971,31 +4925,7 @@ function toggleSearch() {
 }
 
 // ========== iOS 26 导航系统：统一点击、涟漪、滑动指示器 ==========
-// 液态玻璃真折射：Safari 不支持 backdrop-filter 引用 SVG 滤镜，检测 Chromium 后启用；Safari 优雅降级为多层高光玻璃
-(function () {
-  try {
-    var ua = navigator.userAgent;
-    var isSafari = /safari/i.test(ua) && !/chrome|chromium|crios|edg|fxios/i.test(ua);
-    if (!isSafari && window.CSS && CSS.supports && CSS.supports('backdrop-filter', 'url(#x)')) {
-      document.body.classList.add('glass-svg');
-    }
-  } catch (e) { /* 忽略 */ }
-})();
-
-// 按压果冻弹性：Liquid Glass 被按下的挤压→回弹手感（WAAPI spring）
-function navJelly() {
-  var bar = document.getElementById('navBar');
-  if (!bar || !bar.animate) return;
-  bar.animate([
-    { transform: 'translateX(-50%) scale(1,1)' },
-    { transform: 'translateX(-50%) scale(0.955,0.94)', offset: 0.3 },
-    { transform: 'translateX(-50%) scale(1.02,1.04)', offset: 0.65 },
-    { transform: 'translateX(-50%) scale(1,1)' }
-  ], { duration: 520, easing: 'cubic-bezier(.34,1.56,.64,1)' });
-}
-
 function navClick(id, el, event) {
-  navJelly();
   // 收藏页暂无，仅显示提示，不切换激活状态
   if (id === 'favorites') {
     createNavRipple(el, event);
