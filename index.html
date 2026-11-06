@@ -154,7 +154,59 @@ body{
   display:flex;
   flex-direction:column;
 }
-/* ========== 移动端适配已移至样式表末尾（避免被后文基础规则覆盖） ========== */
+@media (max-width: 440px) {
+  .phone{
+    width:100%;height:100vh;height:100dvh;max-height:none;
+    border-radius:0;border:none;box-shadow:none;
+    /* 移动端去掉大面积毛玻璃，改为不透明底色（毛玻璃是卡顿主因） */
+    background:linear-gradient(180deg,#fbfaff 0%,#f5f0ff 45%,#ece5ff 100%);
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+  }
+  body.night .phone{background:linear-gradient(180deg,#0d0a1c 0%,#130e28 50%,#181134 100%)}
+  .screen,.settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{border-radius:0}
+  /* ===== iPhone 16 / 16 Pro（402×874）等灵动岛机型安全区适配 ===== */
+  .header{padding-top:calc(16px + env(safe-area-inset-top, 0px))}
+  .screen{padding-top:calc(52px + env(safe-area-inset-top, 0px));padding-bottom:calc(32px + env(safe-area-inset-bottom, 0px))}
+  .settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{
+    padding-top:calc(52px + env(safe-area-inset-top, 0px));
+    padding-bottom:calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+  .cards-cluster{transform:scale(0.85)}
+  .cards-cluster:hover{transform:scale(0.87)translateY(-3px)}
+  .card-pos1{left:calc(50% - 140px)}.card-pos2{left:calc(50% - 75px)}.card-pos3{left:50%}.card-pos4{left:calc(50% + 75px)}.card-pos5{left:calc(50% + 140px)}
+  .card-detail-modal{width:96vw;max-width:none;max-height:92dvh;padding:24px 20px 32px;border-radius:20px}
+  .card-detail-img{width:150px;height:260px}
+  .card-detail-name{font-size:22px}
+  .horoscope-modal{width:92vw;max-width:none;padding:28px 20px}
+  .wheel-card{width:44px;height:72px}
+  .scene-card{padding:16px 8px 14px}.scene-icon{width:32px;height:32px}.scene-name{font-size:13px}
+  .spread-final-slot .slot-label{font-size:8px;bottom:-20px}
+  .history-item-header{flex-direction:column;gap:4px}
+  .history-item-question{font-size:14px}
+  .nav-bar{width:calc(100% - 24px);max-width:none;height:54px;border-radius:27px;bottom:calc(12px + env(safe-area-inset-bottom, 0px))}
+  .nav-indicator{height:38px;border-radius:20px;top:8px}
+  .nav-item svg{width:20px;height:20px}
+}
+
+/* ========== 移动端性能优化（关掉全屏常驻动画与毛玻璃） ========== */
+@media (max-width: 440px), (pointer: coarse) {
+  .bg-canvas,.bg-rays,.bg-glow,.rose-window,.logo{animation:none !important}
+  .bg-rays{opacity:0.5}
+  .bg-glow{opacity:0.7}
+  .rose-window{opacity:0.26}
+  .scene-card,.nav-bar,.card-detail-modal,.horoscope-modal,.toast,
+  .spread-opt,.placement-slot,.icon-btn,.glass-panel{
+    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+  }
+  .focus-overlay::before{
+    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+    background:rgba(29,20,57,0.62);
+  }
+  .wheel-card{will-change:auto}
+  .screen,.settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{
+    transition:transform 0.42s var(--transition-bounce);
+  }
+}
 /* 刘海已取消 */
 
 /* ========== 玫瑰窗圣光纹理 ========== */
@@ -2807,65 +2859,6 @@ body.night .scene-label{color:var(--text-muted)}
   /* 弹窗在键盘弹出时可滚动，避免输入框被遮住无法滚到可视区 */
   .login-mask{overflow-y:auto;-webkit-overflow-scrolling:touch}
   .email-code-btn{font-size:12px !important}
-}
-
-/* ========== 移动端适配（置于样式表末尾：若放在前部会被后文同特异性基础规则覆盖而完全失效） ========== */
-@media (max-width: 440px) {
-  .phone{
-    width:100%;height:100vh;height:100dvh;max-height:none;
-    border-radius:0;border:none;box-shadow:none;
-    /* 移动端去掉大面积毛玻璃，改为不透明底色（毛玻璃是卡顿主因） */
-    background:linear-gradient(180deg,#fbfaff 0%,#f5f0ff 45%,#ece5ff 100%);
-    backdrop-filter:none;-webkit-backdrop-filter:none;
-  }
-  body.night .phone{background:linear-gradient(180deg,#0d0a1c 0%,#130e28 50%,#181134 100%)}
-  .screen,.settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{border-radius:0}
-  /* ===== iPhone 16 / 16 Pro（402×874）等灵动岛机型安全区适配 ===== */
-  .header{padding-top:calc(16px + env(safe-area-inset-top, 0px))}
-  /* 底部悬浮导航高 54px + 离底 12px：内容区预留 96px，否则底部按钮被导航条遮挡 */
-  .screen{padding-top:calc(52px + env(safe-area-inset-top, 0px));padding-bottom:calc(96px + env(safe-area-inset-bottom, 0px))}
-  .settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{
-    padding-top:calc(52px + env(safe-area-inset-top, 0px));
-    padding-bottom:calc(96px + env(safe-area-inset-bottom, 0px));
-  }
-  /* 选牌轮盘按视口高度动态定位：保证牌堆顶缘恒定在距顶 347px 处，始终位于选牌槽下方
-     （原 -473px 是按 874px 视口写死的，小视口下牌堆上移与卡槽重叠） */
-  .wheel-area-bottom{bottom:calc(100dvh - 1457px)}
-  .cards-cluster{transform:scale(0.85)}
-  .cards-cluster:hover{transform:scale(0.87)translateY(-3px)}
-  .card-pos1{left:calc(50% - 140px)}.card-pos2{left:calc(50% - 75px)}.card-pos3{left:50%}.card-pos4{left:calc(50% + 75px)}.card-pos5{left:calc(50% + 140px)}
-  .card-detail-modal{width:96vw;max-width:none;max-height:92dvh;padding:24px 20px 32px;border-radius:20px}
-  .card-detail-img{width:150px;height:260px}
-  .card-detail-name{font-size:22px}
-  .horoscope-modal{width:92vw;max-width:none;padding:28px 20px}
-  .wheel-card{width:44px;height:72px}
-  .scene-card{padding:16px 8px 14px}.scene-icon{width:32px;height:32px}.scene-name{font-size:13px}
-  .spread-final-slot .slot-label{font-size:8px;bottom:-20px}
-  .history-item-header{flex-direction:column;gap:4px}
-  .history-item-question{font-size:14px}
-  .nav-bar{width:calc(100% - 24px);max-width:none;height:54px;border-radius:27px;bottom:calc(12px + env(safe-area-inset-bottom, 0px))}
-  .nav-indicator{height:38px;border-radius:20px;top:8px}
-  .nav-item svg{width:20px;height:20px}
-}
-
-/* ========== 移动端性能优化（关掉全屏常驻动画与毛玻璃） ========== */
-@media (max-width: 440px), (pointer: coarse) {
-  .bg-canvas,.bg-rays,.bg-glow,.rose-window,.logo{animation:none !important}
-  .bg-rays{opacity:0.5}
-  .bg-glow{opacity:0.7}
-  .rose-window{opacity:0.26}
-  .scene-card,.nav-bar,.card-detail-modal,.horoscope-modal,.toast,
-  .spread-opt,.placement-slot,.icon-btn,.glass-panel{
-    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
-  }
-  .focus-overlay::before{
-    backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
-    background:rgba(29,20,57,0.62);
-  }
-  .wheel-card{will-change:auto}
-  .screen,.settings-screen,.reading-screen,.search-screen,.history-screen,.profile-screen,.admin-screen{
-    transition:transform 0.42s var(--transition-bounce);
-  }
 }
 </style>
 </head>
