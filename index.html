@@ -1711,13 +1711,13 @@ body{
 }
 
 /* ========== 搜索界面（图册）========== */
-/* 全屏图册：z-index 70 盖住底部导航栏（60），底部留白缩小；左上角返回按钮负责退出 */
+/* 底栏保持可见（z-index 60 在图册之上）；图册底部预留 96px 避让底栏，内容滚到底不被遮 */
 .search-screen{
   position:absolute;inset:0;border-radius:48px;
   background:linear-gradient(160deg, #fbfbfe 0%, #f5f0ff 60%, #ede6ff 100%);
-  z-index:70;
+  z-index:15;
   display:none;flex-direction:column;
-  padding:52px 24px 28px;
+  padding:52px 24px 96px;
   overflow:hidden;
   -webkit-overflow-scrolling:touch;
 }
