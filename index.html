@@ -1710,6 +1710,192 @@ body{
   40%{transform:scale(1);opacity:1}
 }
 
+/* ========== 首页 v2 · 深紫夜空神秘系（按用户设计稿重构）==========
+   homeContent = 全屏深紫夜空层；打开其他页面时 homeContent 隐藏，露出浅色系统页面 */
+#homeContent{
+  position:absolute;inset:0;z-index:5;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 20px 118px;
+  border-radius:48px;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% -8%, rgba(139,110,255,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 30% at 80% 12%, rgba(223,183,108,0.08) 0%, transparent 55%),
+    linear-gradient(180deg,#322a54 0%,#2b2250 30%,#231b3f 62%,#191230 100%);
+}
+/* 头部：四芒星品牌 + 副标语 */
+#homeContent .header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:calc(22px + env(safe-area-inset-top, 0px)) 2px 6px;
+  background:none;border:none;box-shadow:none;
+}
+.hd-brand{display:flex;align-items:center;gap:10px}
+.hd-star{width:26px;height:26px;color:#e9d9a8;filter:drop-shadow(0 0 8px rgba(233,217,168,0.5));animation:hd-spin 14s linear infinite}
+@keyframes hd-spin{to{transform:rotate(360deg)}}
+.hd-name{font-family:'Songti SC','STSong','SimSun',serif;font-size:24px;font-weight:700;color:#f3edff;letter-spacing:0.04em;line-height:1.1}
+.hd-sub{font-size:10px;color:rgba(226,216,250,0.6);letter-spacing:0.12em;margin-top:2px}
+#homeContent .header-actions{display:flex;gap:8px}
+#homeContent .icon-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.09);
+  border:1px solid rgba(255,255,255,0.14);
+  color:#d9d0f2;box-shadow:none;
+}
+#homeContent .icon-btn:hover{background:rgba(255,255,255,0.16)}
+
+/* 主视觉：发光拱门 + 漂浮牌 + 星光 + 黑猫剪影 */
+.hero{
+  position:relative;height:298px;margin-top:6px;
+  cursor:pointer;border-radius:26px;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+.hero-arch{
+  position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
+  width:190px;height:252px;
+  border-radius:95px 95px 0 0;
+  border:2px solid rgba(240,226,180,0.75);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 72%, rgba(255,240,210,0.5) 0%, rgba(168,137,255,0.2) 45%, rgba(120,90,200,0.08) 70%, transparent 80%);
+  box-shadow:
+    0 0 60px rgba(210,180,255,0.4),
+    0 0 120px rgba(160,120,255,0.22),
+    inset 0 0 44px rgba(255,240,210,0.24);
+}
+.hero-arch::before{
+  content:'';position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+  width:150px;height:5px;border-radius:50%;
+  background:radial-gradient(ellipse, rgba(255,240,210,0.5) 0%, transparent 70%);
+}
+.hero-arch-glow{
+  position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  width:300px;height:150px;border-radius:50%;
+  background:radial-gradient(ellipse, rgba(255,238,200,0.4) 0%, rgba(168,137,255,0.18) 45%, transparent 72%);
+  filter:blur(16px);
+  animation:hero-breathe 5s ease-in-out infinite alternate;
+}
+@keyframes hero-breathe{from{opacity:0.75;transform:translateX(-50%) scale(1)}to{opacity:1;transform:translateX(-50%) scale(1.08)}}
+.hero-card{
+  position:absolute;border-radius:9px;overflow:hidden;
+  box-shadow:0 10px 30px rgba(10,6,24,0.55), 0 0 0 1px rgba(233,217,168,0.25);
+  opacity:0.9;
+  animation:hero-float 6s ease-in-out infinite alternate;
+}
+.hero-card img{width:100%;height:100%;object-fit:cover;display:block}
+.hc1{width:52px;height:86px;left:14%;top:24%;transform:rotate(-14deg)}
+.hc2{width:46px;height:76px;right:15%;top:16%;transform:rotate(12deg);animation-delay:-2s}
+.hc3{width:40px;height:66px;right:7%;top:52%;transform:rotate(20deg);animation-delay:-4s;opacity:0.7}
+@keyframes hero-float{from{translate:0 0}to{translate:0 -12px}}
+.hero-star{
+  position:absolute;color:#f0e3b8;
+  text-shadow:0 0 10px rgba(240,227,184,0.85);
+  animation:star-tw 2.6s ease-in-out infinite;
+}
+.s1{top:14%;left:30%;font-size:15px}
+.s2{top:7%;right:34%;font-size:11px;animation-delay:-0.9s}
+.s3{top:44%;left:9%;font-size:10px;animation-delay:-1.7s;opacity:0.7}
+@keyframes star-tw{0%,100%{opacity:0.35;transform:scale(0.85)}50%{opacity:1;transform:scale(1.15)}}
+.hero-cat{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);width:74px;height:88px;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.6))}
+.hero-cat svg{width:100%;height:100%}
+
+/* 今日运势卡 */
+.fortune{margin-top:18px}
+.fortune-title{
+  font-family:'Songti SC','STSong','SimSun',serif;
+  font-size:32px;font-weight:700;color:#f5f0ff;
+  letter-spacing:0.06em;margin:0;
+  text-shadow:0 2px 18px rgba(139,110,255,0.35);
+}
+.fortune-desc{font-size:13px;line-height:1.8;color:rgba(226,216,250,0.66);margin:10px 0 16px}
+.fortune-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:12px 26px;border-radius:26px;border:none;cursor:pointer;
+  font-size:14px;font-weight:600;letter-spacing:0.08em;color:#f6f2ff;
+  background:linear-gradient(135deg, rgba(168,137,255,0.4) 0%, rgba(124,93,250,0.28) 100%);
+  border:1px solid rgba(210,190,255,0.35);
+  box-shadow:0 8px 26px rgba(124,93,250,0.28), inset 0 1px 0 rgba(255,255,255,0.25);
+  transition:all 0.35s var(--transition-bounce);
+  -webkit-tap-highlight-color:transparent;
+}
+.fortune-btn:active{transform:scale(0.95)}
+.fb-arrow{transition:transform 0.3s}
+.fortune-btn:hover .fb-arrow{transform:translateX(4px)}
+
+/* 四宫格快捷入口 */
+.quick{
+  margin-top:22px;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:rgba(255,255,255,0.065);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:22px;
+  padding:16px 6px;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  box-shadow:0 10px 30px rgba(10,6,24,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.quick-item{
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  cursor:pointer;padding:4px 2px;border-radius:14px;
+  transition:background 0.3s;-webkit-tap-highlight-color:transparent;
+}
+.quick-item:active{background:rgba(255,255,255,0.07)}
+.qi-icon{width:26px;height:26px;color:#cfc2f5;filter:drop-shadow(0 0 6px rgba(168,137,255,0.4))}
+.qi-name{font-size:12.5px;font-weight:600;color:#efe9fc}
+.qi-desc{font-size:9px;color:rgba(220,210,245,0.5);letter-spacing:0.06em}
+
+/* 探索更多 */
+.explore-head{display:flex;align-items:center;gap:9px;margin:26px 0 12px}
+.eh-bar{width:3px;height:15px;border-radius:2px;background:linear-gradient(180deg,#c9b6ff,#a889ff)}
+.eh-title{font-size:16px;font-weight:700;color:#f3edff;letter-spacing:0.06em}
+.eh-all{margin-left:auto;font-size:12px;color:rgba(220,210,245,0.55);cursor:pointer}
+.eh-all:active{color:#cfc2f5}
+.explore{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exp-card{
+  position:relative;border-radius:18px;overflow:hidden;cursor:pointer;
+  background:linear-gradient(165deg, rgba(84,66,140,0.55) 0%, rgba(48,38,84,0.7) 100%);
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 12px 30px rgba(10,6,24,0.35);
+  transition:transform 0.35s var(--transition-bounce);
+  -webkit-tap-highlight-color:transparent;
+}
+.exp-card:active{transform:scale(0.97)}
+.exp-card img{
+  width:100%;height:132px;object-fit:cover;display:block;
+  opacity:0.88;filter:saturate(0.75) brightness(0.82) hue-rotate(-8deg);
+}
+/* 紫色蒙版：让古典扫描牌面融入深紫夜空主题 */
+.exp-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:132px;
+  background:linear-gradient(180deg, rgba(70,52,130,0.42) 0%, rgba(44,32,88,0.5) 100%);
+  pointer-events:none;z-index:1;
+}
+.exp-card .exp-body{position:relative;z-index:2}
+.exp-body{padding:10px 12px 12px}
+.exp-name{font-family:'Songti SC','STSong','SimSun',serif;font-size:15px;font-weight:700;color:#f3edff;letter-spacing:0.05em}
+.exp-line{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.exp-desc{font-size:10px;color:rgba(220,210,245,0.55)}
+.exp-go{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.14);
+  color:#d9d0f2;font-size:13px;line-height:1;
+}
+
+/* 金句条 */
+.quote-bar{
+  margin-top:20px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:16px 14px;border-radius:16px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.09);
+  font-family:'Songti SC','STSong','SimSun',serif;
+  font-size:13px;color:rgba(238,231,252,0.82);letter-spacing:0.1em;
+}
+.q-mark{color:rgba(233,217,168,0.55);font-size:15px}
+
+@media (max-width: 440px){
+  #homeContent{border-radius:0;padding:0 18px calc(112px + env(safe-area-inset-bottom, 0px))}
+  .hero{height:270px}
+  .fortune-title{font-size:29px}
+}
+
 /* ========== 搜索界面（图册）========== */
 /* 底栏保持可见（z-index 60 在图册之上）；图册底部预留 96px 避让底栏，内容滚到底不被遮 */
 .search-screen{
@@ -2916,9 +3102,15 @@ body.night .scene-label{color:var(--text-muted)}
   <!-- ========== 首页内容容器 ========== -->
   <div id="homeContent">
   
-  <!-- ========== 头部 ========== -->
+  <!-- ========== 头部（品牌 + 功能按钮）========== -->
   <header class="header">
-    <img class="logo" src="图片素材/主页标题.png" alt="GgooDiv">
+    <div class="hd-brand">
+      <svg class="hd-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 6.6L20.5 10.5l-6.6 1.9L12 19l-1.9-6.6L3.5 10.5l6.6-1.9z"/></svg>
+      <div class="hd-titles">
+        <div class="hd-name">Tarot</div>
+        <div class="hd-sub">探索内在 · 遇见更好的自己</div>
+      </div>
+    </div>
     <div class="header-actions">
       <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="切换昼夜">
         <span id="themeIcon" style="display:flex;align-items:center;justify-content:center">
@@ -2944,93 +3136,80 @@ body.night .scene-label{color:var(--text-muted)}
     </div>
   </header>
 
-  <!-- ========== 卡牌展示区 ========== -->
-  <div class="tarot-panel">
-    <div class="panel-subtitle">The Tarot Awaits</div>
-    <div class="arch-frame">
-      <div class="arch-bg"></div>
-      <div class="cards-cluster" onclick="openDivination()">
-        <div class="tarot-card card-pos1">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
-          <div class="card-shimmer"></div>
-        </div>
-        <div class="tarot-card card-pos2">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
-          <div class="card-shimmer"></div>
-        </div>
-        <div class="tarot-card card-pos3">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
-          <div class="card-shimmer"></div>
-        </div>
-        <div class="tarot-card card-pos4">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
-          <div class="card-shimmer"></div>
-        </div>
-        <div class="tarot-card card-pos5">
-          <div class="card-inner card-inner-img"><img class="card-img" src="图片素材/塔罗素材/背面牌.webp" alt="塔罗牌背"></div>
-          <div class="card-shimmer"></div>
-        </div>
+  <!-- ========== 主视觉：发光拱门 + 漂浮塔罗牌 + 黑猫剪影 ========== -->
+  <div class="hero" style="position:relative;height:298px;min-height:298px;flex-shrink:0;margin-top:6px;overflow:hidden;border-radius:26px;cursor:pointer" onclick="openDivination()">
+    <div class="hero-arch"></div>
+    <div class="hero-arch-glow"></div>
+    <div class="hero-card hc1"><img src="图片素材/塔罗素材/背面牌.webp" alt=""></div>
+    <div class="hero-card hc2"><img src="图片素材/塔罗素材/背面牌.webp" alt=""></div>
+    <div class="hero-card hc3"><img src="图片素材/塔罗素材/背面牌.webp" alt=""></div>
+    <div class="hero-star s1">✦</div>
+    <div class="hero-star s2">✦</div>
+    <div class="hero-star s3">✦</div>
+    <div class="hero-cat">
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <path d="M31 46 L24 18 L40 31 Q50 26 60 31 L76 18 L69 46 Q79 60 79 80 Q79 110 50 114 Q21 110 21 80 Q21 60 31 46 Z" fill="#0e0a1a"/>
+        <path d="M78 96 Q94 92 92 74" fill="none" stroke="#0e0a1a" stroke-width="9" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ========== 今日运势 ========== -->
+  <div class="fortune">
+    <h1 class="fortune-title">今日运势</h1>
+    <p class="fortune-desc">聆听宇宙的指引，<br>开启属于你的答案</p>
+    <button class="fortune-btn" onclick="openDivination()">抽一张牌 <span class="fb-arrow">→</span></button>
+  </div>
+
+  <!-- ========== 四宫格快捷入口 ========== -->
+  <div class="quick">
+    <div class="quick-item" onclick="openDivination()">
+      <svg class="qi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <div class="qi-name">感情占卜</div>
+      <div class="qi-desc">爱与关系</div>
+    </div>
+    <div class="quick-item" onclick="openDivination()">
+      <svg class="qi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <div class="qi-name">事业学业</div>
+      <div class="qi-desc">前程发展</div>
+    </div>
+    <div class="quick-item" onclick="getDailyHoroscope()">
+      <svg class="qi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l1.9 6.6 6.6 1.9-6.6 1.9L12 19l-1.9-6.6L3.5 10.5l6.6-1.9z"/><path d="M19 15l.7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7z"/></svg>
+      <div class="qi-name">运势解析</div>
+      <div class="qi-desc">今日趋势</div>
+    </div>
+    <div class="quick-item" onclick="openDivination()">
+      <svg class="qi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21V9"/><path d="M12 9C12 5 9 2 5 2c0 4 3 7 7 7z"/><path d="M12 12c0-3.5 2.8-6 6.3-6C18.3 9.6 15.5 12 12 12z"/><path d="M12 17c0-2.8 2.2-5 5-5 0 2.8-2.2 5-5 5z"/></svg>
+      <div class="qi-name">幸运指南</div>
+      <div class="qi-desc">开运建议</div>
+    </div>
+  </div>
+
+  <!-- ========== 探索更多 ========== -->
+  <div class="explore-head">
+    <span class="eh-bar"></span>
+    <span class="eh-title">探索更多</span>
+    <span class="eh-all" onclick="openSearch()">全部 ›</span>
+  </div>
+  <div class="explore">
+    <div class="exp-card" onclick="getDailyHoroscope()">
+      <img src="图片素材/塔罗素材/18-月亮.webp" alt="月亮">
+      <div class="exp-body">
+        <div class="exp-name">月亮运势</div>
+        <div class="exp-line"><span class="exp-desc">感受内心的波动</span><span class="exp-go">›</span></div>
+      </div>
+    </div>
+    <div class="exp-card" onclick="openSearch()">
+      <img src="图片素材/塔罗素材/17-星星.webp" alt="星星">
+      <div class="exp-body">
+        <div class="exp-name">星象解读</div>
+        <div class="exp-line"><span class="exp-desc">行星带来的影响</span><span class="exp-go">›</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ========== 主按钮 ========== -->
-  <div class="cta-wrap">
-    <button class="btn-divine" onclick="openDivination()">
-      <span>✦ &nbsp;开启命运之门&nbsp; ✦</span>
-    </button>
-  </div>
-
-  <!-- ========== 场景推荐 ========== -->
-  <div class="scene-section">
-    <div class="scene-label">场景占卜</div>
-    <div class="scene-cards">
-      <!-- 雷诺曼暂未开放：入口保留可点击，点击时提示未开放 -->
-      <div class="scene-card" onclick="openLenormand()">
-        <div class="scene-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="4" y="3" width="16" height="20" rx="2"/>
-            <rect x="6" y="5" width="12" height="16" rx="1.5" fill="none" stroke="currentColor" stroke-width="1"/>
-            <path d="M12 8v2M10 12h4M12 14v2M10 18h4" stroke-width="1.5"/>
-            <circle cx="12" cy="10" r="1"/>
-            <circle cx="9" cy="16" r="0.8"/>
-            <circle cx="15" cy="16" r="0.8"/>
-          </svg>
-        </div>
-        <div class="scene-name">雷诺曼</div>
-        <div class="scene-desc">预兆</div>
-      </div>
-      <div class="scene-card" onclick="showToast('神谕卡 · 敬请期待')">
-        <div class="scene-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/>
-            <path d="M12 2a15.3 15.3 0 0 0-4 10 15.3 15.3 0 0 0 4 10"/>
-            <line x1="2" y1="12" x2="22" y2="12"/>
-          </svg>
-        </div>
-        <div class="scene-name">神谕卡</div>
-        <div class="scene-desc">天启</div>
-      </div>
-      <div class="scene-card" onclick="getDailyHoroscope()">
-        <div class="scene-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="12" cy="12" r="5"/>
-            <line x1="12" y1="1" x2="12" y2="3"/>
-            <line x1="12" y1="21" x2="12" y2="23"/>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-            <line x1="1" y1="12" x2="3" y2="12"/>
-            <line x1="21" y1="12" x2="23" y2="12"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-          </svg>
-        </div>
-        <div class="scene-name">今日运势</div>
-        <div class="scene-desc">指引</div>
-      </div>
-    </div>
-  </div>
+  <!-- ========== 金句 ========== -->
+  <div class="quote-bar"><span class="q-mark">❝</span>有时候，答案就在你心里。<span class="q-mark">❞</span></div>
 
   </div>
   <!-- /#homeContent -->
